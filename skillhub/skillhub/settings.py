@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'login'
 ]
+
+AUTH_USER_MODEL = 'login.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -75,10 +78,15 @@ WSGI_APPLICATION = 'skillhub.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'skillhub_db',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
+        'HOST': 'localhost', 
+        'PORT': '5432',       
     }
 }
+
 
 
 # Password validation
@@ -116,6 +124,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+STATICFILES_DIRS = [
+    BASE_DIR / "skillhub/static",
+    BASE_DIR / "/login/static/",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
