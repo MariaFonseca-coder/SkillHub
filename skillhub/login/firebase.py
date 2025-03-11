@@ -3,7 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, auth
 
 # Define la ruta correcta al archivo de credenciales descargado
-FIREBASE_CERT_PATH = os.path.join(os.path.dirname(__file__), 'fb.json')
+FIREBASE_CERT_PATH = os.path.join(os.path.dirname(__file__), 'skillhub-603c7-firebase-adminsdk-fbsvc-e5bcaff135.json')
 
 # Inicializa Firebase Admin SDK (esto se hace una sola vez)
 if not firebase_admin._apps:
