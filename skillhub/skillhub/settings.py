@@ -77,13 +77,19 @@ WSGI_APPLICATION = 'skillhub.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'skillhub_db',
-        'USER': 'postgres',
-        'PASSWORD': 'password',
-        'HOST': 'localhost', 
-        'PORT': '5432',       
+    # CAMBIO EN LA BASE DE DATOS POR DEFAULT
+  #  'default': {
+  #      'ENGINE': 'django.db.backends.postgresql',
+  #      'NAME': 'skillhub_db',
+  #      'USER': 'postgres',
+  #      'PASSWORD': 'password',
+  #      'HOST': 'localhost', 
+  #      'PORT': '5432',       
+  #  }
+
+     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',  # Se usa SQLite solo para poder iniciar o ejecutar la app
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

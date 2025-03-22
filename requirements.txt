@@ -24,7 +24,7 @@ idna==3.10
 msgpack==1.1.0
 proto-plus==1.26.0
 protobuf==5.29.3
-psycopg2-binary==2.9.10  # Comentado porque no estamos usando PostgreSQL ahora, solo SQLite para poder ejecutar.
+#psycopg2-binary==2.9.10  # Comentado porque no estamos usando PostgreSQL ahora, solo SQLite para poder ejecutar.
 # pyasn1==0.6.1  # Comentado porque no se está utilizando en este momento
 # pyasn1_modules==0.4.1  # Comentado porque no se está utilizando en este momento
 pycparser==2.22
