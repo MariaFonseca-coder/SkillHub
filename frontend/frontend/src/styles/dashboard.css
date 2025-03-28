@@ -1,0 +1,34 @@
+.dashboard-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #e6f0ff;
+  }
+  
+  .dashboard-box {
+    background: white;
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    text-align: center;
+  }
+  
+  .dashboard-box h1 {
+    margin-bottom: 1rem;
+  }
+  
+  .dashboard-box button {
+    margin-top: 2rem;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .dashboard-box button:hover {
+    background-color: #d32f2f;
+  }
+  
