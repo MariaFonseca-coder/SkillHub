@@ -30,7 +30,7 @@ const Login = () => {
         <form onSubmit={handleLogin}>
           <input type="email" placeholder="Username or Email" value={email} onChange={e => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
-          <div className="forgot-link"><a href="#">Forgot password?</a></div>
+          <div className="forgot-link"><a href="/password-reset">Forgot password?</a></div>
           <button type="submit" className="login-btn">LOGIN</button>
         </form>
         <p>Or Sign Up Using</p>

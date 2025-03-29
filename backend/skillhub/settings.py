@@ -95,7 +95,7 @@ DATABASES = {
 import firebase_admin
 from firebase_admin import credentials
 
-FIREBASE_CRED_PATH = './credentials/skillhublogin-firebase-adminsdk-fbsvc-a41968f806.json'
+FIREBASE_CRED_PATH = './credentials/skillhub-603c7-firebase-adminsdk-fbsvc-0797b64710.json'
 cred = credentials.Certificate(FIREBASE_CRED_PATH)
 firebase_admin.initialize_app(cred)
 
