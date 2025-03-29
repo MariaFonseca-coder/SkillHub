@@ -29,6 +29,7 @@ DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -58,6 +59,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+
 
 ROOT_URLCONF = 'skillhub.urls'
 

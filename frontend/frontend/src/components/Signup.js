@@ -10,7 +10,7 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  // Si deseas recopilar más datos (nombre, biografía, etc.), agrégalos aquí
+  const [role, setRole] = useState('user'); // "user" por defecto, o "admin"
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
@@ -24,9 +24,16 @@ const Signup = () => {
       // 2. Obtener el token de Firebase
       const token = await userCredential.user.getIdToken();
       // 3. Llamar al endpoint de Django para crear/actualizar el perfil en Firestore
-      await axios.post('http://localhost:8000/api/firebase-signup/', { token });
-      // 4. Redirigir al dashboard u otra página de la aplicación
-      navigate('/dashboard');
+      await axios.post('http://localhost:8000/api/firebase-signup/', { 
+        token,
+        role
+      });
+      // 4. Redirigir según el rol: admin a "/dashboard", usuario normal a "/feed"
+      if (role === 'admin') {
+        navigate('/dashboard');
+      } else {
+        navigate('/feed');
+      }
     } catch (error) {
       console.error("Error al registrar:", error);
     }
@@ -58,10 +65,13 @@ const Signup = () => {
             onChange={e => setConfirm(e.target.value)} 
             required 
           />
+          {/* Campo para seleccionar el rol */}
+          <select value={role} onChange={e => setRole(e.target.value)}>
+            <option value="user">Usuario Normal</option>
+            <option value="admin">Administrador</option>
+          </select>
           <button type="submit" className="login-btn">SIGN UP</button>
         </form>
-        <p>Or Sign Up Using</p>
-        <button className="google-btn">Sign in with Google</button>
         <p>Already have an account? <a href="/">Login</a></p>
         <p><a href="/politicas">Ver Políticas</a></p>
       </div>
