@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Login from './components/Login';
-import Signup from './components/Signup';
-import Politicas from './components/Politicas';
-import Dashboard from './components/Dashboard';
-import Feed from './components/Feed';
+import Login from './views/Login';
+import Signup from './views/Signup';
+import Politicas from './views/Politicas';
+import Dashboard from './views/Dashboard';
+import Feed from './views/Feed';
 
 function App() {
   return (
