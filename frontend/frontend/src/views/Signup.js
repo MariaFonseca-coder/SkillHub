@@ -23,6 +23,11 @@ const Signup = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // 2. Obtener el token de Firebase
       const token = await userCredential.user.getIdToken();
+
+      // 2.1. Guarda el token en localStorage para usarlo más tarde
+       localStorage.setItem('firebaseToken', token);
+
+       
       // 3. Llamar al endpoint de Django para crear/actualizar el perfil en Firestore
       await axios.post('http://localhost:8000/api/firebase-signup/', { 
         token,

@@ -1,0 +1,208 @@
+
+
+.profile-container {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    height: 100vh;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9; 
+    max-width: 100%; 
+    overflow-y: auto; 
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; 
+}
+
+
+.profile-container h1 {
+    color: #2c3e50; 
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+
+.profile-container p {
+    font-size: 1.1rem;
+    margin: 10px 0;
+    color: #7f8c8d; 
+}
+
+
+.profile-container input,
+.profile-container textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    font-size: 1rem;
+    border: 1px solid #ccc; 
+    border-radius: 4px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+
+.profile-container input:focus,
+.profile-container textarea:focus {
+    border-color: #2980b9; 
+    outline: none;
+}
+
+/* Estilos para los botones */
+.profile-container button {
+    background-color: #2980b9; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+}
+
+/* Hover en botones */
+.profile-container button:hover {
+    background-color: #1f5a7c; 
+}
+
+
+.error-message, .loading-message {
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.error-message {
+    color: #e74c3c; 
+}
+
+.loading-message {
+    color: #95a5a6; 
+}
+
+
+.edit-button {
+    background-color: #16a085; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.edit-button:hover {
+    background-color: #1abc9c; 
+}
+
+.save-button {
+    background-color: #e74c3c; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.save-button:hover {
+    background-color: #c0392b;
+}
+
+
+.posts-container {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.posts-container h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: #2c3e50; 
+}
+
+.post-item {
+    background-color: #fff;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-item p {
+    font-size: 1rem;
+    color: #7f8c8d; 
+}
+
+
+.recommended-users {
+    margin-top: 40px;
+    width: 100%; 
+}
+
+.recommended-user {
+    background-color: #ffffff;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.recommended-user p {
+    font-size: 1.1rem;
+    color: #2c3e50; 
+    margin-bottom: 10px;
+}
+
+
+.recommended-user .follow-button,
+.recommended-user .report-button,
+.recommended-user .message-button {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-right: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.recommended-user .follow-button {
+    background-color: #2ecc71; 
+    color: white;
+    border: none;
+}
+
+.recommended-user .follow-button:hover {
+    background-color: #27ae60; 
+}
+
+
+.recommended-user .report-button {
+    background-color: #e74c3c; 
+    color: white;
+    border: none;
+}
+
+.recommended-user .report-button:hover {
+    background-color: #c0392b; 
+}
+
+
+.recommended-user .message-button {
+    background-color: #3498db; 
+    color: white;
+    border: none;
+}
+
+.recommended-user .message-button:hover {
+    background-color: #2980b9;
+}
