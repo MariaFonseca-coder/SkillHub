@@ -1,4 +1,3 @@
-// src/components/Politicas.js
 import React from 'react';
 import '../styles/politicas.css';
 

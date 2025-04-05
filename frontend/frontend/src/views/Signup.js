@@ -10,10 +10,12 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [location, setLocation] = useState('');
   const [userType, setUserType] = useState('student'); // 'student' o 'teacher'
+
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
@@ -29,6 +31,7 @@ const Signup = () => {
       // 3. Llamar al endpoint de Django para crear/actualizar el perfil en Firestore
       await axios.post('http://localhost:8000/api/firebase-signup/', { 
         token,
+
         role: userType, // Se envía "teacher" o "student"
         username,
         full_name: fullName,
