@@ -115,3 +115,4 @@ def password_reset_request(request):
         )
         return Response({'mensaje': 'Correo de recuperación enviado.'}, status=status.HTTP_200_OK)
     return Response({'error': 'Email inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
