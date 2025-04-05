@@ -9,6 +9,8 @@ import '../styles/auth.css';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Opcional: para que el usuario elija si es docente o estudiante
+  const [userType, setUserType] = useState('student'); 
   const navigate = useNavigate();
 
   // Función para redirigir según el rol obtenido del backend
@@ -25,13 +27,11 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // 1. Inicia sesión en Firebase con email y contraseña
+      // Inicia sesión en Firebase con email y contraseña
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // 2. Obtén el token de Firebase
       const token = await userCredential.user.getIdToken();
-      // 3. Envía el token al backend y recibe la respuesta (incluyendo el rol)
-      const { data } = await axios.post('http://localhost:8000/api/firebase-login/', { token });
-      // 4. Redirige según el rol devuelto
+      // Enviamos el token (y opcionalmente el userType) al backend
+      const { data } = await axios.post('http://localhost:8000/api/firebase-login/', { token, userType });
       redirectByRole(data.role);
     } catch (error) {
       console.error("Error al autenticar:", error);
@@ -43,11 +43,14 @@ const Login = () => {
       const provider = new GoogleAuthProvider();
       // Inicia sesión con popup de Google
       const userCredential = await signInWithPopup(auth, provider);
-      // Obtén el token de Firebase
       const token = await userCredential.user.getIdToken();
-      // Envía el token al backend
-      const { data } = await axios.post('http://localhost:8000/api/firebase-login/', { token });
-      // Redirige según el rol obtenido
+      // Aquí, opcionalmente, se puede preguntar al usuario su rol (docente/estudiante)
+      // Por ejemplo, podrías usar un prompt o un select en la interfaz. En este ejemplo se usa el estado userType.
+      const { data } = await axios.post('http://localhost:8000/api/firebase-login/', { 
+        token,
+        provider: "google",
+        userType  // si no se envía, en el backend se usará "student" por defecto
+      });
       redirectByRole(data.role);
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
@@ -80,6 +83,14 @@ const Login = () => {
         </form>
         <p>Or Sign In Using</p>
         <button className="google-btn" onClick={handleGoogleLogin}>Sign in with Google</button>
+        {/* Opcional: si deseas que el usuario elija su rol */}
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <label htmlFor="userType">Registrarse como: </label>
+          <select id="userType" value={userType} onChange={e => setUserType(e.target.value)}>
+            <option value="student">Estudiante</option>
+            <option value="teacher">Docente</option>
+          </select>
+        </div>
         <p>
           Sign Up Using Your Email <a href="/signup">Sign Up</a>
         </p>

@@ -1,0 +1,245 @@
+/* signup.css */
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Configuración del body e html */
+  html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f7f7f7;
+  }
+  
+  /* Contenedor principal con fondo decorativo */
+  .auth-background {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f7f7f7;
+  }
+  
+  /* Círculos decorativos */
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    background-color: #4285F4;
+    opacity: 0.15;
+    z-index: 1;
+  }
+  
+  .circle1 {
+    width: 250px;
+    height: 250px;
+    top: -100px;
+    left: -100px;
+  }
+  
+  .circle2 {
+    width: 300px;
+    height: 300px;
+    bottom: -150px;
+    right: -150px;
+  }
+  
+  /* Contenedor del formulario */
+  .auth-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Título del formulario */
+  .form-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #333;
+  }
+  
+  /* Mensaje de error */
+  .error-message {
+    background-color: #fdecea;
+    border: 1px solid #f5c2c0;
+    color: #a94442;
+    padding: 0.75rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  
+  /* Estilos generales del formulario */
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  
+  .input-wrapper label {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    color: #555;
+  }
+  
+  .input-wrapper input,
+  .input-wrapper select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border 0.2s ease;
+  }
+  
+  .input-wrapper input:focus,
+  .input-wrapper select:focus {
+    border-color: #4285F4;
+    outline: none;
+  }
+  
+  /* Campo de ubicación con botón */
+  .location-field {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .location-field input {
+    flex: 1;
+  }
+  
+  .location-btn {
+    padding: 0.65rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .location-btn:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Botón principal de registro */
+  .login-btn {
+    padding: 0.85rem;
+    background-color: #4285F4;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .login-btn:hover {
+    background-color: #357ae8;
+  }
+  
+  /* Separador para opciones alternativas */
+  .separator {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #777;
+    margin: 1rem 0;
+    position: relative;
+  }
+  
+  .separator::before,
+  .separator::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background-color: #ddd;
+  }
+  
+  .separator::before {
+    left: 0;
+  }
+  
+  .separator::after {
+    right: 0;
+  }
+  
+  /* Botón para iniciar sesión con Google */
+  .google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #555;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .google-btn:hover {
+    background-color: #f7f7f7;
+  }
+  
+  .google-btn img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Enlace de redirección */
+  .redirect {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .redirect a {
+    color: #4285F4;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .redirect a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Ajustes responsivos */
+  @media (max-width: 480px) {
+    .auth-container {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+    .form-title {
+      font-size: 1.6rem;
+    }
+    .login-btn,
+    .google-btn {
+      font-size: 0.95rem;
+    }
+  }
+  
