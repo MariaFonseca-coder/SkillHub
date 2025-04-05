@@ -5,23 +5,21 @@ const Politicas = () => {
   return (
     <div className="politica-container">
       <div className="politica-box">
-        <h2>Política de Privacidad</h2>
+        <h2>Privacy Policy</h2>
         <p>
-          En nuestra plataforma, valoramos tu privacidad. La información que
-          recopilamos es utilizada únicamente para ofrecerte una mejor experiencia de usuario.
+          At our platform, we value your privacy. The information we collect is used solely to provide you with a better user experience.
         </p>
         <p>
-          No compartiremos tus datos con terceros sin tu consentimiento. El uso de esta
-          plataforma implica la aceptación de nuestras políticas.
+          We will not share your data with third parties without your consent. By using this platform, you agree to our policies.
         </p>
-        <h3>Datos que recopilamos:</h3>
+        <h3>Data We Collect:</h3>
         <ul>
-          <li>Correo electrónico</li>
-          <li>Nombre de usuario</li>
-          <li>Actividad dentro del sistema</li>
+          <li>Email address</li>
+          <li>Username</li>
+          <li>System activity</li>
         </ul>
-        <p>Podés revisar esta política en cualquier momento.</p>
-        <a href="/">Volver al login</a>
+        <p>You can review this policy at any time.</p>
+        <a href="/">Back to login</a>
       </div>
     </div>
   );
