@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from firebase_admin import firestore
 from firebase_admin import auth as firebase_auth
 from .permissions import FirebaseAuthentication  # Importa el permiso personalizado
+from datetime import datetime
 
 class ProfileView(APIView):
     """
@@ -150,7 +151,7 @@ class RecommendedUsersView(APIView):
 
             # Aquí se puede implementar alguna lógica para recomendar usuarios basados en intereses, hashtags, etc.
             db = firestore.client()
-            recommended_users_ref = db.collection('users').limit(3)  # Obtén algunos usuarios para recomendar
+            recommended_users_ref = db.collection('users').limit(4)  # Obtén algunos usuarios para recomendar
             recommended_users = []
 
             for doc in recommended_users_ref.stream():
@@ -193,7 +194,17 @@ class NotificationsView(APIView):
             # Obtener las notificaciones del usuario desde Firestore
             db = firestore.client()
             notifications_ref = db.collection('notifications').where('user_uid', '==', uid)
-            notifications = [doc.to_dict() for doc in notifications_ref.stream()]
+            notifications = []
+
+            for doc in notifications_ref.stream():
+                notification = doc.to_dict()
+
+                # Asegurarse de que el campo 'notificationDate' sea un Timestamp de Firestore
+                if isinstance(notification.get('notificationDate'), firestore.Timestamp):
+                    # Convertir el Timestamp a una cadena ISO 8601
+                    notification['notificationDate'] = notification['notificationDate'].isoformat()
+
+                notifications.append(notification)
 
             return Response(notifications, status=200)
 
@@ -206,7 +217,6 @@ class NotificationsView(APIView):
         except Exception as e:
             return Response({'error': f'Error fetching notifications: {str(e)}'}, status=400)
         
-
 class AccountManagementView(APIView):
     """
     Vista para actualizar los datos del perfil de usuario.

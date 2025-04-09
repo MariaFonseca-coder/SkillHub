@@ -8,6 +8,7 @@ import Dashboard from './views/Dashboard';
 import Profile from './views/Profile/Profile'
 import AccountManagement from './views/AccountManagmentView/AccountManagement'
 import Feed from './views/Feed';
+import NotificationView from './views/Notification/NotificationsView';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/feed" element={<Feed />} />
         <Route path='/profile' element={<Profile/>}/>
         <Route path="/account-management" element={<AccountManagement />} />
+        <Route path="/notifications" element={<NotificationView/>}/>
       </Routes>
     </Router>
   );
