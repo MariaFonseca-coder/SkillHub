@@ -31,7 +31,6 @@ const Login = () => {
       const token = await userCredential.user.getIdToken();
       // 3. Envía el token al backend y recibe la respuesta (incluyendo el rol)
       const { data } = await axios.post('http://localhost:8000/api/firebase-login/', { token });
-<<<<<<< HEAD
 
       // 3.1. Guarda el token en localStorage para usarlo más tarde
       localStorage.setItem('firebaseToken', token);
@@ -42,10 +41,10 @@ const Login = () => {
       } else {
         navigate('/feed');
       }
-=======
+
       // 4. Redirige según el rol devuelto
       redirectByRole(data.role);
->>>>>>> d0d6643c3e02621a9690ffd8da72e4c6f0cbd391
+      
     } catch (error) {
       console.error("Error al autenticar:", error);
     }
