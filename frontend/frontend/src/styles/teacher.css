@@ -1,0 +1,16 @@
+/* src/styles/teacher.css */
+.teacher-container {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .teacher-container h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  
+  .teacher-container p {
+    font-size: 1.2rem;
+    color: #333;
+  }
+  
