@@ -6,6 +6,8 @@ import Signup from './views/Signup';
 import Politicas from './views/Politicas';
 import Dashboard from './views/Dashboard';
 import Feed from './views/Feed';
+import RecuperarContrasenna from './views/RecuperarContrasenna';
+import GestionContactos from './views/GestionContactos';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/politicas" element={<Politicas />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/feed" element={<Feed />} />
+        <Route path="/RecuperarContrasenna" element={<RecuperarContrasenna />} />
+        <Route path="/GestionContactos" element={<GestionContactos />} />
       </Routes>
     </Router>
   );

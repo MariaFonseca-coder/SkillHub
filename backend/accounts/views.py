@@ -9,6 +9,7 @@ from firebase_admin import firestore
 from django.contrib.auth.forms import PasswordResetForm
 from rest_framework.decorators import api_view
 
+
 class FirebaseSignupView(APIView):
     """
     Recibe un token de Firebase y el campo "role" (además de otros campos opcionales)
@@ -115,3 +116,65 @@ def password_reset_request(request):
         )
         return Response({'mensaje': 'Correo de recuperación enviado.'}, status=status.HTTP_200_OK)
     return Response({'error': 'Email inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetRequestView(APIView):
+    """
+    Verifica si el correo existe en la base de datos antes de enviar el correo.
+    """
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response({"error": "No se proporcionó un correo"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verificar si el email existe en la base de datos de Django
+        user_exists = User.objects.filter(email=email).exists()
+
+        if not user_exists:
+            return Response({"error": "Este correo no está registrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"mensaje": "El correo existe, procede con Firebase"}, status=status.HTTP_200_OK)
+    
+
+db = firestore.client()
+
+class FriendListView(APIView):
+    """
+    Obtiene la lista de amigos para un usuario específico en Firebase Firestore.
+    """
+
+    def get(self, request):
+        user_id = "zOcHVjePjAaX8m5xeqOuIYqAedh2"  # Temporalmente quemado
+
+        try:
+            friendships_ref = db.collection("friendships")
+            query = friendships_ref.where("state", "==", "accepted").stream()
+
+            friends = []
+
+            for friendship in query:
+                data = friendship.to_dict()
+                userId1 = data.get("userId1").id
+                userId2 = data.get("userId2").id
+
+                if user_id == userId1:
+                    friend_id = userId2
+                elif user_id == userId2:
+                    friend_id = userId1
+                else:
+                    continue  # No es una amistad del usuario actual, se omite
+
+                # Obtener datos del amigo
+                friend_doc = db.collection("users").document(friend_id).get()
+                if friend_doc.exists:
+                    friend_data = friend_doc.to_dict()
+                    friends.append({
+                        "id": friend_id,
+                        "name": friend_data.get("name", "Desconocido"),
+                        
+                    })
+
+            return Response({"friends": friends}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
