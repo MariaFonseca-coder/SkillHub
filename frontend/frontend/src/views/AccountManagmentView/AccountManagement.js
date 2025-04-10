@@ -5,7 +5,7 @@ import '../../styles/AccountM/accountManagement.css'
 
 const AccountManagement = () => {
     const [profileData, setProfileData] = useState(null);
-    const [newData, setNewData] = useState({ name: '', biografia: '', privacidad: 'public' });
+    const [newData, setNewData] = useState({ name: '', biografia: '', privacidad: 'public', fotoPerfil: '' }); 
     const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState({ name: '', biografia: '' }); // Errores específicos para cada campo
     const [success, setSuccess] = useState(null);
@@ -24,7 +24,8 @@ const AccountManagement = () => {
                 setNewData({ 
                     name: response.data.name, 
                     biografia: response.data.biografia, 
-                    privacidad: response.data.privacidad || 'public'  // Usar 'public' como valor por defecto
+                    privacidad: response.data.privacidad || 'public',
+                    fotoPerfil: response.data.fotoPerfil || '' // <-- nuevo campo cargado
                 });
                 setLoading(false);
             })
@@ -145,9 +146,9 @@ const AccountManagement = () => {
                         value={newData.name} 
                         onChange={handleChange} 
                     />
-                    {/* Mostrar el mensaje de error si hay */}
                     {errors.name && <div className="am_account-management-error-message">{errors.name}</div>}
                 </div>
+
                 <div className="am_account-management-form-group">
                     <label className="am_account-management-form-label">Biography</label>
                     <textarea 
@@ -156,9 +157,9 @@ const AccountManagement = () => {
                         value={newData.biografia} 
                         onChange={handleChange} 
                     />
-                    {/* Mostrar el mensaje de error si hay */}
                     {errors.biografia && <div className="am_account-management-error-message">{errors.biografia}</div>}
                 </div>
+
                 <div className="am_account-management-form-group">
                     <label className="am_account-management-form-label">Privacy</label>
                     <select 
@@ -171,11 +172,30 @@ const AccountManagement = () => {
                         <option value="private">Private</option>
                     </select>
                 </div>
+
+                <div className="am_account-management-form-group">
+                    <label className="am_account-management-form-label">Profile Photo URL</label>
+                    <input 
+                        className="am_account-management-form-input"
+                        type="text" 
+                        name="fotoPerfil" 
+                        value={newData.fotoPerfil} 
+                        onChange={handleChange} 
+                    />
+                    {/* Vista previa si hay URL */}
+                    {newData.fotoPerfil && (
+                        <img 
+                            src={newData.fotoPerfil} 
+                            alt="Preview" 
+                            style={{ width: '100px', marginTop: '10px', borderRadius: '50%' }} 
+                        />
+                    )}
+                </div>
+
                 <button type="submit" className="am_account-management-save-button">Save Changes</button>
             </form>
 
             <div className="am_go-back-container">
-                {/* Usamos handleNavigate para controlar la salida */}
                 <button onClick={() => handleNavigate('/profile')} className="am_go-back-button">Go Back to Profile</button>
             </div>
         </div>

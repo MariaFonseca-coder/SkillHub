@@ -54,28 +54,37 @@ const Profile = () => {
         }
     }, [token]);
 
+    // Aquí va la logica para manejar el follow
+    const handleFollow = (userId) => {
+        console.log(`Seguir a: ${userId}`); 
+    };
 
-const handleFollow = (userId) => {
-    console.log(`Seguir a: ${userId}`); 
-};
+    // Aquí va la logica para manejar el reporte
+    const handleReport = (userId) => {
+        console.log(`Reportar a: ${userId}`); 
+    };
 
-
-const handleReport = (userId) => {
-    console.log(`Reportar a: ${userId}`); 
-};
-
-
-const handleSendMessage = (userId) => {
-    console.log(`Enviar mensaje a: ${userId}`); 
-};
+    // Aquí va la logica para manejar el mensaje 
+    const handleSendMessage = (userId) => {
+        console.log(`Enviar mensaje a: ${userId}`); 
+    };
 
     // Renderizando el contenido
     if (loading) return <div className="loading-message">Loading...</div>;
-    if (error) return <div className="error-message">{error}</div>;
+    if (error) return <div className="error-message">Error loading profile, Please Login again.</div>;
 
     return (
         <div className="profile-container">
             <h1>{profileData.name}'s Profile</h1>
+
+            {/* Mostrar foto de perfil si está disponible */}
+            {profileData.fotoPerfil && (
+                <img 
+                    src={profileData.fotoPerfil} 
+                    alt="Profile" 
+                    className="profile-picture"
+                />
+            )}
 
             {/* Mostrar datos del perfil */}
             <p>Email: {profileData.email}</p>
