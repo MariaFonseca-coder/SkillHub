@@ -13,23 +13,25 @@ from datetime import datetime
 
 class FirebaseSignupView(APIView):
     """
-    Recibe un token de Firebase y el campo "role" (además de otros campos opcionales)
-    para crear/actualizar la información del usuario en Firestore y en el modelo User de Django.
-    Se asignan valores por defecto para los campos no enviados.
+    Recibe un token de Firebase y campos adicionales para crear/actualizar la información
+    del usuario en Firestore y en el modelo User de Django.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         token = request.data.get('token')
-        role = request.data.get('role', 'user')  # "user" por defecto
-        # Campos adicionales: no se reciben desde el formulario, usar valores por defecto
-        name = ""
+        if not token:
+            return Response({'error': 'No se proporcionó token'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Recoger campos adicionales enviados desde el frontend
+        role = request.data.get('role', 'student')  # Se espera 'teacher' o 'student'. "admin" se asigna directamente en la DB si es necesario.
+        username = request.data.get('username', '')
+        full_name = request.data.get('full_name', '')
+        location = request.data.get('location', '')
+        # Otros campos predeterminados
         biography = ""
         privacy = "public"
         foto_perfil = ""
-
-        if not token:
-            return Response({'error': 'No se proporcionó token'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # 1. Verificar el token con Firebase
@@ -38,11 +40,17 @@ class FirebaseSignupView(APIView):
             email = decoded_token.get('email')
 
             # 2. Crear o actualizar el usuario en Django
+            # Si se proporcionó un username, se utiliza; de lo contrario, se usa la parte del email
+            username_to_use = username if username else email.split('@')[0]
             user, created = User.objects.get_or_create(
                 email=email,
-                defaults={'username': email.split('@')[0]}
+                defaults={'username': username_to_use}
             )
-            # Asignar el rol: si es "admin", se establecen los flags correspondientes
+            # Actualiza el username si es distinto
+            if user.username != username_to_use:
+                user.username = username_to_use
+
+            # Si el rol enviado es "admin" (aunque en la vista no se muestra esa opción), se configuran permisos administrativos
             if role == 'admin':
                 user.is_staff = True
                 user.is_superuser = True
@@ -56,7 +64,9 @@ class FirebaseSignupView(APIView):
             user_doc_ref = db.collection('users').document(uid)
             user_doc_ref.set({
                 'email': email,
-                'name': name,
+                'username': username_to_use,
+                'name': full_name,
+                'location': location,
                 'biografia': biography,
                 'privacidad': privacy,
                 'fotoPerfil': foto_perfil,
@@ -94,7 +104,16 @@ class FirebaseLoginView(APIView):
                 email=email, 
                 defaults={'username': email.split('@')[0]}
             )
+            # Valor por defecto: si el usuario tiene permisos administrativos
             role = 'admin' if user.is_staff else 'user'
+            
+            # Consultar en Firestore para obtener el rol guardado (por ejemplo, "teacher" o "student")
+            db = firestore.client()
+            user_doc_ref = db.collection('users').document(uid)
+            user_doc = user_doc_ref.get()
+            if user_doc.exists:
+                data = user_doc.to_dict()
+                role = data.get('role', role)
 
             return Response({
                 'mensaje': 'Autenticación exitosa',
@@ -103,8 +122,10 @@ class FirebaseLoginView(APIView):
                 'role': role
             }, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': 'Token inválido o expirado', 'detalle': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({
+                'error': 'Token inválido o expirado',
+                'detalle': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def password_reset_request(request):

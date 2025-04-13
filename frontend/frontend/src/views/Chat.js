@@ -142,12 +142,12 @@ const Chat = () => {
         <input
           type="text"
           className="chat-input"
-          placeholder="Escribe un mensaje..."
+          placeholder="Write something..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
         <button className="send-button" onClick={handleSendMessage}>
-          Enviar
+          Send
         </button>
       </div>
     </div>

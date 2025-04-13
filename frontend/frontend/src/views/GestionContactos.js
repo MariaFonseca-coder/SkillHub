@@ -68,13 +68,13 @@ const GestionContactos = () => {
                 className="delete-btn"
                 onClick={() => handleDeleteFriend(friend.id)}
               >
-                Eliminar
+                Delete
               </button>
               <button
                 className="message-btn"
                 onClick={() => navigate(`/chat/${friend.id}`)}
               >
-                Enviar mensaje
+                Send message
               </button>
             </div>
           ))
