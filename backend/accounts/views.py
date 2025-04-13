@@ -121,7 +121,7 @@ class FirebaseLoginView(APIView):
                 'user_id': user.id,
                 'role': role
             }, status=status.HTTP_200_OK)
-        except Exception as e:
+        except Exception as e:  
             return Response({
                 'error': 'Token inválido o expirado',
                 'detalle': str(e)
@@ -160,18 +160,29 @@ class PasswordResetRequestView(APIView):
 
 db = firestore.client()
 
-class FriendListView(APIView):
-    """
-    Obtiene la lista de amigos para un usuario específico en Firebase Firestore.
-    """
+from firebase_admin import auth
 
+class FriendListView(APIView):
     def get(self, request):
-        user_id = "zOcHVjePjAaX8m5xeqOuIYqAedh2"  # Temporalmente quemado
+        # Obtener el token del encabezado Authorization
+        auth_header = request.headers.get('Authorization')
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Token no proporcionado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
+
+        try:
+            # Verificar el token de Firebase y obtener el uid
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+        except Exception as e:
+            return Response({"error": f"Token inválido: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
             friendships_ref = db.collection("friendships")
             query = friendships_ref.where("state", "==", "accepted").stream()
-            
+
             friends = []
 
             for friendship in query:
@@ -184,16 +195,15 @@ class FriendListView(APIView):
                 elif user_id == userId2:
                     friend_id = userId1
                 else:
-                    continue  # No es una amistad del usuario actual, se omite
+                    continue
 
-                # Obtener datos del amigo
                 friend_doc = db.collection("users").document(friend_id).get()
                 if friend_doc.exists:
                     friend_data = friend_doc.to_dict()
                     friends.append({
                         "id": friend_id,
                         "name": friend_data.get("displayName", "Desconocido"),
-                        "fotoPerfil": friend_data.get("fotoPerfil", "")  # <-- Aquí agregamos la URL
+                        "fotoPerfil": friend_data.get("fotoPerfil", "")
                     })
 
             return Response({"friends": friends}, status=status.HTTP_200_OK)
@@ -201,17 +211,45 @@ class FriendListView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+from firebase_admin import credentials
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from firebase_admin import firestore
+
+# Asegúrate de que ya está inicializado Firebase Admin
+# Si no, incluye esta línea en tu configuración:
+# firebase_admin.initialize_app()
+
+db = firestore.client()
+
 class DeleteFriendshipView(APIView):
     """
-    Elimina una amistad entre dos usuarios en Firestore.
+    Desactiva una amistad entre dos usuarios en Firestore (cambia 'state' a 'disabled').
     """
 
     def delete(self, request):
-        user_id = "zOcHVjePjAaX8m5xeqOuIYqAedh2"  # Temporalmente quemado
-        friend_id = request.data.get("friend_id")
+        # Obtener el token del encabezado Authorization
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Authorization header missing or invalid."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
 
         try:
-            friendships_ref = db.collection("friendships")  
+            # Verificamos el token con Firebase Admin
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+
+            friend_id = request.data.get("friend_id")
+            if not friend_id:
+                return Response({"error": "Missing friend_id in request."}, status=status.HTTP_400_BAD_REQUEST)
+
+            friendships_ref = db.collection("friendships")
             query = friendships_ref.where("state", "==", "accepted").stream()
 
             for friendship in query:
@@ -220,14 +258,20 @@ class DeleteFriendshipView(APIView):
                 userId2 = data.get("userId2").id
 
                 if (user_id == userId1 and friend_id == userId2) or (user_id == userId2 and friend_id == userId1):
-                    # Eliminar el documento de la amistad
-                    friendship.reference.delete()
-                    return Response({"message": "Amistad eliminada correctamente."}, status=status.HTTP_200_OK)
+                    # Cambiar el estado a 'disabled' en lugar de eliminar
+                    friendship.reference.update({"state": "disabled"})
+                    return Response({"message": "Friend deleted."}, status=status.HTTP_200_OK)
 
-            return Response({"error": "Amistad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Friendship not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        except firebase_auth.InvalidIdTokenError:
+            return Response({"error": "Invalid ID token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except firebase_auth.ExpiredIdTokenError:
+            return Response({"error": "Expired ID token."}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 class GetUserInfoView(APIView):
     """

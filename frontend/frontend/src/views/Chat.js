@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import "../styles/chat.css";
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [friendData, setFriendData] = useState(null);
-  const [chatId, setChatId] = useState(null); // <--- nuevo estado para guardar el chatId
+  const [chatId, setChatId] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null); // 👈 nuevo estado
 
   const { friendId } = useParams();
-  const currentUserId = "zOcHVjePjAaX8m5xeqOuIYqAedh2"; // Temporalmente quemado
-
 
   useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid); // ✅ guardamos el uid real
+      } else {
+        console.log("Usuario no autenticado");
+      }
+    });
+
+    return () => unsubscribe(); // limpieza
+  }, []);
+
+  useEffect(() => {
+    if (!friendId) return;
     const fetchFriendData = async () => {
       try {
         const response = await fetch(`http://localhost:8000/api/get_user_info/?friend_id=${friendId}`);
-        if (!response.ok) throw new Error("Error al obtener datos del usuario");
         const data = await response.json();
         setFriendData(data);
       } catch (error) {
@@ -29,34 +41,14 @@ const Chat = () => {
   }, [friendId]);
 
   useEffect(() => {
+    if (!currentUserId || !friendId) return;
+
     const fetchChatId = async () => {
-      const currentUserId = "zOcHVjePjAaX8m5xeqOuIYqAedh2"; // Temporal
-      const friendUserId = friendId;
-
       try {
-        const response = await fetch(`http://localhost:8000/api/get-chat-id/?user1=${currentUserId}&user2=${friendUserId}`);
+        const response = await fetch(`http://localhost:8000/api/get-chat-id/?user1=${currentUserId}&user2=${friendId}`);
         const data = await response.json();
-        console.log("Chat ID encontrado:", data.chatId);
-        setChatId(data.chatId); // <--- guardamos el chatId aquí
-      } catch (error) {
-        console.error("Error al obtener chat ID:", error);
-      }
-    };
 
-    fetchChatId();
-  }, [friendId]);
-
-  useEffect(() => {
-    const fetchChatId = async () => {
-      const currentUserId = "zOcHVjePjAaX8m5xeqOuIYqAedh2"; // Temporal
-      const friendUserId = friendId;
-  
-      try {
-        const response = await fetch(`http://localhost:8000/api/get-chat-id/?user1=${currentUserId}&user2=${friendUserId}`);
-        const data = await response.json();
-  
         if (response.ok) {
-          console.log("Chat ID encontrado:", data.chatId);
           setChatId(data.chatId);
           setMessages(data.messages || []);
         } else {
@@ -66,19 +58,19 @@ const Chat = () => {
         console.error("Error al obtener chat ID:", error);
       }
     };
-  
+
     fetchChatId();
-  }, [friendId]);
+  }, [currentUserId, friendId]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-  
+    if (!newMessage.trim() || !chatId || !currentUserId) return;
+
     const nuevoMensaje = {
       text: newMessage,
       time: new Date().toISOString(),
       user: currentUserId
     };
-  
+
     try {
       const response = await fetch("http://localhost:8000/api/send-message/", {
         method: "POST",
@@ -86,17 +78,16 @@ const Chat = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          chatId: chatId,
+          chatId,
           text: newMessage,
           userId: currentUserId
         })
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        // Mostramos el mensaje al instante
-        setMessages((prevMessages) => [...prevMessages, nuevoMensaje]);
+        setMessages((prev) => [...prev, nuevoMensaje]);
         setNewMessage("");
       } else {
         console.error("Error al enviar mensaje:", data.error);
@@ -105,8 +96,6 @@ const Chat = () => {
       console.error("Error de red:", error);
     }
   };
-  
-  
 
   return (
     <div className="chat-container">
@@ -123,20 +112,16 @@ const Chat = () => {
         )}
       </div>
 
-      
-
       <div className="messages-container">
-  {messages.map((msg, index) => (
-    <div
-      key={index}
-      className={`message ${
-        msg.user === currentUserId ? "sent" : "received"
-      }`}
-    >
-      {msg.text}
-    </div>
-  ))}
-</div>
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`message ${msg.user === currentUserId ? "sent" : "received"}`}
+          >
+            {msg.text}
+          </div>
+        ))}
+      </div>
 
       <div className="input-container">
         <input
@@ -155,4 +140,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
