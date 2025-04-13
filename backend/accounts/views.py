@@ -8,6 +8,7 @@ from firebase_admin import auth as firebase_auth
 from firebase_admin import firestore
 from django.contrib.auth.forms import PasswordResetForm
 from rest_framework.decorators import api_view
+from datetime import datetime
 
 
 class FirebaseSignupView(APIView):
@@ -149,7 +150,7 @@ class FriendListView(APIView):
         try:
             friendships_ref = db.collection("friendships")
             query = friendships_ref.where("state", "==", "accepted").stream()
-
+            
             friends = []
 
             for friendship in query:
@@ -170,11 +171,152 @@ class FriendListView(APIView):
                     friend_data = friend_doc.to_dict()
                     friends.append({
                         "id": friend_id,
-                        "name": friend_data.get("name", "Desconocido"),
-                        
+                        "name": friend_data.get("displayName", "Desconocido"),
+                        "fotoPerfil": friend_data.get("fotoPerfil", "")  # <-- Aquí agregamos la URL
                     })
 
             return Response({"friends": friends}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DeleteFriendshipView(APIView):
+    """
+    Elimina una amistad entre dos usuarios en Firestore.
+    """
+
+    def delete(self, request):
+        user_id = "zOcHVjePjAaX8m5xeqOuIYqAedh2"  # Temporalmente quemado
+        friend_id = request.data.get("friend_id")
+
+        try:
+            friendships_ref = db.collection("friendships")  
+            query = friendships_ref.where("state", "==", "accepted").stream()
+
+            for friendship in query:
+                data = friendship.to_dict()
+                userId1 = data.get("userId1").id
+                userId2 = data.get("userId2").id
+
+                if (user_id == userId1 and friend_id == userId2) or (user_id == userId2 and friend_id == userId1):
+                    # Eliminar el documento de la amistad
+                    friendship.reference.delete()
+                    return Response({"message": "Amistad eliminada correctamente."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Amistad no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetUserInfoView(APIView):
+    """
+    Devuelve el displayName y la fotoPerfil de un usuario a partir de su ID.
+    """
+
+    def get(self, request):
+        friend_id = request.GET.get("friend_id")
+
+        if not friend_id:
+            return Response({"error": "Falta el parámetro friend_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_ref = db.collection("users").document(friend_id).get()
+
+            if not user_ref.exists:
+                return Response({"error": "Usuario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+            user_data = user_ref.to_dict()
+            return Response({
+                "id": friend_id,
+                "displayName": user_data.get("displayName", "Desconocido"),
+                "fotoPerfil": user_data.get("fotoPerfil", "")
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetChatIdView(APIView):
+    """
+    Devuelve el ID del chat entre dos usuarios a partir de sus userId.
+    Si lo encuentra, también devuelve los mensajes relacionados a ese chat.
+    """
+
+    def get(self, request):
+        user1 = request.GET.get("user1")
+        user2 = request.GET.get("user2")
+
+        if not user1 or not user2:
+            return Response({"error": "Faltan parámetros user1 o user2."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            chat_ref = db.collection("chat")
+            query = chat_ref.select(["userId1", "userId2"]).stream()
+
+            for doc in query:
+                data = doc.to_dict()
+                id1 = data.get("userId1").id
+                id2 = data.get("userId2").id
+
+                if (user1 == id1 and user2 == id2) or (user1 == id2 and user2 == id1):
+                    chat_id = doc.id
+
+                    # Buscar mensajes relacionados al chat
+                    messages_ref = db.collection("message").where("chatId", "==", db.document(f"chat/{chat_id}")).order_by("time")
+                    messages_query = messages_ref.stream()
+
+                    messages = []
+                    for msg_doc in messages_query:
+                        msg_data = msg_doc.to_dict()
+                        messages.append({
+                            "text": msg_data.get("text"),
+                            "time": msg_data.get("time").isoformat() if msg_data.get("time") else None,
+                            "user": msg_data.get("user").id if msg_data.get("user") else None
+                        })
+
+                    return Response({
+                        "chatId": chat_id,
+                        "messages": messages
+                    }, status=status.HTTP_200_OK)
+
+                # Si no existe, lo creamos
+            new_chat_ref = chat_ref.document()
+            new_chat_ref.set({
+                "userId1": db.document(f"users/{user1}"),
+                "userId2": db.document(f"users/{user2}")
+            })
+
+            return Response({
+                "chatId": new_chat_ref.id,
+                "messages": []  # nuevo, así que no hay mensajes aún
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SendMessageView(APIView):
+    """
+    Guarda un nuevo mensaje en Firestore con chatId, texto, user y marca de tiempo.
+    """
+
+    def post(self, request):
+        chat_id = request.data.get("chatId")
+        text = request.data.get("text")
+        user_id = request.data.get("userId")
+
+        if not chat_id or not text or not user_id:
+            return Response({"error": "Faltan parámetros (chatId, text o userId)."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            message_data = {
+                "chatId": db.document(f"chat/{chat_id}"),
+                "text": text,
+                "time": datetime.utcnow(),
+                "user": db.document(f"users/{user_id}")
+            }
+
+            db.collection("message").add(message_data)
+
+            return Response({"success": True, "message": "Mensaje enviado correctamente."}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

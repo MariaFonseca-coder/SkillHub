@@ -1,0 +1,117 @@
+.chat-container {
+    max-width: 600px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fefefe;
+    height: 80vh;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  
+  .messages-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    background-color: #fafafa;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .message {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 20px;
+    word-wrap: break-word;
+  }
+  
+  .sent {
+    align-self: flex-end;
+    background-color: #dcf8c6;
+  }
+  
+  .received {
+    align-self: flex-start;
+    background-color: #e9e9eb;
+  }
+  
+  .input-container {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .chat-input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+  }
+  
+  .send-button {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .send-button:hover {
+    background-color: #45a049;
+  }
+  
+  .chat-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .chat-user-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Esto lo hace circular */
+    object-fit: cover;
+    margin-left: 8px;
+  }
+
+  .friend-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .sent {
+    background-color: #dcf8c6;
+    align-self: flex-end;
+    text-align: right;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+  }
+  
+  .received {
+    background-color: #f1f0f0;
+    align-self: flex-start;
+    text-align: left;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
+  }
+  
