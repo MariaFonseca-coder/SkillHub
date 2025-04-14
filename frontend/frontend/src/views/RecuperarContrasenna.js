@@ -9,20 +9,41 @@ const RecuperarContrasenna = () => {
 
   const handlePasswordReset = async (e) => {
     e.preventDefault();
-    
+    console.log(email)
+
     if (!email) {
-      setMensaje("Please tpye an email");
+      setMensaje("Please type an email");
       return;
     }
-
+  
     try {
-      await sendPasswordResetEmail(auth, email); // Enviar solicitud a Firebase
-      setMensaje("If the email is registered, you'll receive an email to recovery your password.");
+      // Primero consulta al backend para verificar si es admin
+      const response = await fetch("http://localhost:8000/api/password-reset-request/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        if (data.mensaje === "admin") {
+          setMensaje("A different method is required to change the password.");
+          return;
+        } else if (data.mensaje === "ok") {
+          // Ahora sí mandamos el correo desde Firebase
+          await sendPasswordResetEmail(auth, email);
+          setMensaje("If the email is registered, you'll receive an email to recover your password.");
+        }
+      } else {
+        setMensaje(data.error || "Unexpected error occurred");
+      }
     } catch (error) {
-      console.error("Error while sending email:", error); 
+      console.error("Error:", error);
       setMensaje("Error while sending email");
     }
   };
+  
 
   return (
     <div className="auth-container">

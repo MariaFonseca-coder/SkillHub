@@ -139,24 +139,49 @@ def password_reset_request(request):
         return Response({'mensaje': 'Correo de recuperación enviado.'}, status=status.HTTP_200_OK)
     return Response({'error': 'Email inválido.'}, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from firebase_admin import firestore  # Asegúrate de que firebase_admin esté inicializado
+from django.contrib.auth.models import User
+
 class PasswordResetRequestView(APIView):
     """
-    Verifica si el correo existe en la base de datos antes de enviar el correo.
+    Verifica si el correo existe en la base de datos antes de enviar el correo,
+    y si tiene rol 'admin' devuelve un mensaje especial.
     """
     def post(self, request):
-        email = request.data.get("email")
+
+
+        email = request.data.get("email", "").strip().lower()
 
         if not email:
             return Response({"error": "No se proporcionó un correo"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verificar si el email existe en la base de datos de Django
-        user_exists = User.objects.filter(email=email).exists()
+        # 1. Verifica si el usuario exi ste en Django (opcional si solo usás Firebase)
+        #. user_exists = User.objects.filter(email=email).exists()
 
-        if not user_exists:
-            return Response({"error": "Este correo no está registrado"}, status=status.HTTP_404_NOT_FOUND)
+        # if not user_exists:
+          #  return Response({"error": "Este correo no está registrado"}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"mensaje": "El correo existe, procede con Firebase"}, status=status.HTTP_200_OK)
-    
+        # 2. Busca en Firestore el usuario con ese email y obtiene su rol
+        db = firestore.client()
+        users_ref = db.collection("users")  # Asegurate de que la colección se llame así
+        query = users_ref.where("email", "==", email).limit(1).stream()
+
+        user_data = None
+        for doc in query:
+            user_data = doc.to_dict()
+            break
+
+        if not user_data:
+            return Response({"error": "Usuario no encontrado en Firestore"}, status=status.HTTP_404_NOT_FOUND)
+
+        role = user_data.get("role", "").lower()
+        if role == "admin":
+            return Response({"mensaje": "admin"}, status=status.HTTP_200_OK)
+
+        return Response({"mensaje": "ok"}, status=status.HTTP_200_OK)
 
 db = firestore.client()
 
@@ -221,9 +246,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from firebase_admin import firestore
 
-# Asegúrate de que ya está inicializado Firebase Admin
-# Si no, incluye esta línea en tu configuración:
-# firebase_admin.initialize_app()
+
 
 db = firestore.client()
 

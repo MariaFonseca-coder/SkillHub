@@ -12,7 +12,11 @@ const user = auth.currentUser;
   const [friends, setFriends] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false); // Estado para mostrar el modal
   const [friendToDelete, setFriendToDelete] = useState(null); // Estado para saber a qué amigo eliminar
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const filteredFriends = friends.filter((friend) =>
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
 
   useEffect(() => {
@@ -83,9 +87,16 @@ const user = auth.currentUser;
   return (
     <div>
       <h2>Friends list</h2>
+      <input
+        type="text"
+        placeholder="Search friends..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="search-bar"
+      />
       <div className="friends-list">
         {friends.length > 0 ? (
-          friends.map((friend) => (
+          filteredFriends.map((friend) => (
             <div key={friend.id} className="friend-card">
               <img
                 src={friend.fotoPerfil || "https://via.placeholder.com/96"} // <- si no hay fotoPerfil, imagen por defecto
@@ -108,7 +119,7 @@ const user = auth.currentUser;
             </div>
           ))
         ) : (
-          <p>Your friends will be displayed here!</p>
+          <p>No friends found</p>
         )}
       </div>
 
