@@ -6,34 +6,45 @@ import "../styles/gestionContactos.css";
 
 const GestionContactos = () => {
   const auth = getAuth();
-const user = auth.currentUser;
+  const user = auth.currentUser;
   const navigate = useNavigate();
 
   const [friends, setFriends] = useState([]);
-  const [showConfirmModal, setShowConfirmModal] = useState(false); // Estado para mostrar el modal
-  const [friendToDelete, setFriendToDelete] = useState(null); // Estado para saber a qué amigo eliminar
-  const [searchTerm, setSearchTerm] = useState("");
+  const [followers, setFollowers] = useState([]);
 
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [friendToDelete, setFriendToDelete] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("friends"); // "friends" o "followers"
+
+  
   const filteredFriends = friends.filter((friend) =>
     friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
+  const filteredFollowers = followers.filter((follower) =>
+    follower.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     const auth = getAuth();
-  
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
           const token = await user.getIdToken();
-  
           const response = await axios.get("http://localhost:8000/api/friends-list/", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
-  
           setFriends(response.data.friends);
+          const followersResponse = await axios.get("http://localhost:8000/api/followers-list/", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          setFollowers(followersResponse.data.followers);
+
         } catch (error) {
           console.error("Error al obtener la lista de amigos:", error);
         }
@@ -41,89 +52,154 @@ const user = auth.currentUser;
         console.log("No hay usuario autenticado.");
       }
     });
-  
-    return () => unsubscribe(); // Limpieza del listener al desmontar el componente
+
+    return () => unsubscribe();
   }, []);
+
   const handleDeleteFriend = async (friendId) => {
+    setShowConfirmModal(true);
+    setFriendToDelete(friendId);
+  };
+
+  const handleRemoveFollower = async (followerId) => {
     try {
-      // Mostrar el modal de confirmación
-      setShowConfirmModal(true);
-      setFriendToDelete(friendId); // Guardar el id del amigo a eliminar
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("Usuario no autenticado");
+        return;
+      }
+  
+      const token = await user.getIdToken();
+  
+      await axios.delete("http://localhost:8000/api/delete-follower/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { follower_id: followerId },
+      });
+  
+      // Actualizamos la lista de seguidores localmente
+      setFollowers((prev) => prev.filter((f) => f.id !== followerId));
+    } catch (error) {
+      console.error("Error al eliminar al seguidor:", error);
+    }
+  };
+  
+
+  const confirmDelete = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("Usuario no autenticado");
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      await axios.delete("http://localhost:8000/api/delete-friend/", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { friend_id: friendToDelete },
+      });
+
+      setFriends((prevFriends) => prevFriends.filter((f) => f.id !== friendToDelete));
+      setShowConfirmModal(false);
     } catch (error) {
       console.error("Error al eliminar la amistad:", error);
     }
   };
 
-  const confirmDelete = async () => {
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      console.error("Usuario no autenticado");
-      return;
-    }
-
-    const token = await user.getIdToken();
-
-    await axios.delete("http://localhost:8000/api/delete-friend/", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      data: { friend_id: friendToDelete }
-    });
-
-    // Actualizar lista de amigos local
-    setFriends((prevFriends) => prevFriends.filter((f) => f.id !== friendToDelete));
-    setShowConfirmModal(false); // Cerrar el modal
-  } catch (error) {
-    console.error("Error al eliminar la amistad:", error);
-  }
-};
-
-
   const cancelDelete = () => {
-    setShowConfirmModal(false); // Cerrar el modal sin hacer nada
+    setShowConfirmModal(false);
   };
 
   return (
     <div>
-      <h2>Friends list</h2>
+      <h2>Contacts management</h2>
+
+      <div className="toggle-container">
+        <button
+          className={viewMode === "friends" ? "active-toggle" : ""}
+          onClick={() => setViewMode("friends")}
+        >
+          Friends
+        </button>
+        <button
+          className={viewMode === "followers" ? "active-toggle" : ""}
+          onClick={() => setViewMode("followers")}
+        >
+          Followers
+        </button>
+      </div>
+
       <input
         type="text"
-        placeholder="Search friends..."
+        placeholder="Search..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="search-bar"
       />
+
       <div className="friends-list">
-        {friends.length > 0 ? (
-          filteredFriends.map((friend) => (
-            <div key={friend.id} className="friend-card">
-              <img
-                src={friend.fotoPerfil || "https://via.placeholder.com/96"} // <- si no hay fotoPerfil, imagen por defecto
-                alt={`Foto de ${friend.name}`}
-                className="friend-photo"
-              />
-              <span className="friend-name">{friend.name}</span>
-              <button 
-                className="delete-btn"
-                onClick={() => handleDeleteFriend(friend.id)}
-              >
-                Delete
-              </button>
-              <button
-                className="message-btn"
-                onClick={() => navigate(`/chat/${friend.id}`)}
-              >
-                Send message
-              </button>
-            </div>
-          ))
+        {viewMode === "friends" ? (
+          filteredFriends.length > 0 ? (
+            filteredFriends.map((friend) => (
+              <div key={friend.id} className="friend-card">
+                <img
+                  src={friend.fotoPerfil || "https://via.placeholder.com/96"}
+                  alt={`Foto de ${friend.name}`}
+                  className="friend-photo"
+                />
+                <span className="friend-name">{friend.name}</span>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDeleteFriend(friend.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  className="message-btn"
+                  onClick={() => navigate(`/chat/${friend.id}`)}
+                >
+                  Send message
+                </button>
+              </div>
+            ))
+          ) : (
+            <p>No friends found</p>
+          )
         ) : (
-          <p>No friends found</p>
+          filteredFollowers.length > 0 ? (
+            filteredFollowers.map((follower) => (
+              <div key={follower.id} className="friend-card">
+                <img
+                  src={follower.fotoPerfil || "https://via.placeholder.com/96"}
+                  alt={`Foto de ${follower.name}`}
+                  className="friend-photo"
+                />
+                <span className="friend-name">{follower.name}</span>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleRemoveFollower(follower.id)}
+                >
+                  Remove follower
+                </button>
+                <button
+                  className="message-btn"
+                  onClick={() => navigate(`/chat/${follower.id}`)}
+                >
+                  Send message
+                </button>
+              </div>
+            ))
+            
+          ) : (
+            <p>No followers found</p>
+          )
         )}
       </div>
 
-      {/* Modal de confirmación - Ventana pequeña */}
       {showConfirmModal && (
         <div className="modal-overlay">
           <div className="modal-window">

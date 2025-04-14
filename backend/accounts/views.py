@@ -237,6 +237,52 @@ class FriendListView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class FollowersListView(APIView):
+    def get(self, request):
+        # Obtener el token del encabezado Authorization
+        auth_header = request.headers.get('Authorization')
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Token no proporcionado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
+
+        try:
+            # Verificar el token de Firebase y obtener el uid
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+        except Exception as e:
+            return Response({"error": f"Token inválido: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            followers_ref = db.collection("followers")
+            query = followers_ref.where("followed", "==", db.document(f"users/{user_id}")) \
+                                 .where("state", "==", "accepted") \
+                                 .stream()
+
+            followers = []
+
+            for doc in query:
+                data = doc.to_dict()
+                follower_ref = data.get("follower")
+
+                if follower_ref:
+                    follower_id = follower_ref.id
+                    follower_doc = db.collection("users").document(follower_id).get()
+
+                    if follower_doc.exists:
+                        follower_data = follower_doc.to_dict()
+                        followers.append({
+                            "id": follower_id,
+                            "name": follower_data.get("displayName", "Desconocido"),
+                            "fotoPerfil": follower_data.get("fotoPerfil", "")
+                        })
+
+            return Response({"followers": followers}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 import firebase_admin
 from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
@@ -294,6 +340,54 @@ class DeleteFriendshipView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from firebase_admin import auth as firebase_auth
+from firebase_admin import firestore
+
+db = firestore.client()
+
+class DeleteFollowerView(APIView):
+    """
+    Desactiva un seguidor cambiando el estado a 'disabled' en la colección followers.
+    """
+
+    def delete(self, request):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Authorization header missing or invalid."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
+
+        try:
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+
+            follower_id = request.data.get("follower_id")
+            if not follower_id:
+                return Response({"error": "Missing follower_id in request."}, status=status.HTTP_400_BAD_REQUEST)
+
+            followers_ref = db.collection("followers")
+            query = followers_ref.where("state", "==", "accepted").stream()
+
+            for follower_doc in query:
+                data = follower_doc.to_dict()
+                followed_user = data.get("followed")
+                follower_user = data.get("follower")
+
+                if followed_user.id == user_id and follower_user.id == follower_id:
+                    follower_doc.reference.update({"state": "disabled"})
+                    return Response({"message": "Follower disabled."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Follower relationship not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        except firebase_auth.InvalidIdTokenError:
+            return Response({"error": "Invalid ID token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except firebase_auth.ExpiredIdTokenError:
+            return Response({"error": "Expired ID token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class GetUserInfoView(APIView):

@@ -1,6 +1,6 @@
 # accounts/urls.py
 from django.urls import path
-from .views import FirebaseLoginView, FirebaseSignupView, password_reset_request, PasswordResetRequestView, FriendListView, DeleteFriendshipView, GetUserInfoView, GetChatIdView, SendMessageView
+from .views import FirebaseLoginView, FirebaseSignupView, password_reset_request, PasswordResetRequestView, FriendListView, DeleteFriendshipView, GetUserInfoView, GetChatIdView, SendMessageView, FollowersListView, DeleteFollowerView
 
 urlpatterns = [
     path('firebase-signup/', FirebaseSignupView.as_view(), name='firebase-signup'),
@@ -12,5 +12,7 @@ urlpatterns = [
     path('get_user_info/', GetUserInfoView.as_view(), name='get_user_info'),
     path('get-chat-id/', GetChatIdView.as_view(), name='get-chat-id'),
     path('send-message/', SendMessageView.as_view(), name="send-message"),
+    path('followers-list/', FollowersListView.as_view(), name='followers-list'),  
+    path('delete-follower/', DeleteFollowerView.as_view(), name='delete-follower'),
 
 ]
