@@ -10,6 +10,12 @@ import Feed from './views/Feed';
 import RecuperarContrasenna from './views/RecuperarContrasenna';
 import GestionContactos from './views/GestionContactos';
 import Chat from './views/Chat'
+import Profile from './views/Profile/Profile'
+import AccountManagement from './views/AccountManagmentView/AccountManagement'
+
+import NotificationView from './views/Notification/NotificationsView';
+
+import Teacher from './views/Teacher';  
 
 function App() {
   return (
@@ -24,6 +30,10 @@ function App() {
         <Route path="/GestionContactos" element={<GestionContactos />} />
         <Route path="/Chat/:friendId" element={<Chat />} />
 
+        <Route path='/profile' element={<Profile/>}/>
+        <Route path="/account-management" element={<AccountManagement />} />
+        <Route path="/notifications" element={<NotificationView/>}/>
+        <Route path="/teacher" element={<Teacher />} />
       </Routes>
     </Router>
   );

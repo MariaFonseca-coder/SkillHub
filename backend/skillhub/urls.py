@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('accounts.urls')),
     path('api/', include('posts.urls')),
+    path('api/profile/', include('user_profile.urls')), 
     path('', redirect_index, name='home'),
     path('index/', index, name='index'),
 ]

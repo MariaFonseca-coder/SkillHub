@@ -1,0 +1,60 @@
+.notifications-container {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #fff;
+}
+
+.notifications-container h1 {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.notification-item {
+    background-color: #f5f5f5;
+    border-left: 4px solid #3f51b5;
+    border-radius: 5px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: #eaeaea;
+}
+
+.notification-item p {
+    margin: 5px 0;
+    color: #444;
+    font-size: 16px;
+}
+
+.notification-item p strong {
+    color: #111;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 18px;
+    padding: 20px;
+    color: #888;
+}
+
+.error-message {
+    text-align: center;
+    font-size: 18px;
+    padding: 20px;
+    color: #e53935;
+}
+
+@media (max-width: 768px) {
+    .notifications-container {
+        padding: 20px 15px;
+    }
+
+    .notification-item {
+        padding: 12px 15px;
+    }
+}

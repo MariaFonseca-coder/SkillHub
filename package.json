@@ -1,13 +1,5 @@
 {
-  "dependencies": {
-    "axios": "^1.8.4",
-    "firebase": "^11.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.4.1",
-    "react-scripts": "^5.0.1"
-  },
-  "name": "proyectoahorasi",
+  "name": "skillhub",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -24,5 +16,13 @@
     "url": "https://github.com/MariaFonseca-coder/SkillHub/issues"
   },
   "homepage": "https://github.com/MariaFonseca-coder/SkillHub#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "firebase": "^11.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.4.1",
+    "react-scripts": "^5.0.1"
+  }
 }
