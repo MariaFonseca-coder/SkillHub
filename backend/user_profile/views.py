@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from firebase_admin import firestore
 from firebase_admin import auth as firebase_auth
-from .permissions import FirebaseAuthentication  # Importa el permiso personalizado
+from .permissions import FirebaseAuthentication  #
 from datetime import datetime
 
 class ProfileView(APIView):
