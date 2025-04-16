@@ -46,8 +46,9 @@ const Login = () => {
       redirectByRole(data.role);
       
     } catch (error) {
-      console.error("Error al autenticar:", error);
+      console.error("Error al autenticar:", error.code, error.message);
     }
+    
   };
 
   const handleGoogleLogin = async () => {

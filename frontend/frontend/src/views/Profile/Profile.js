@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import '../../styles/Profile/profile.css';
+import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
 
 const Profile = () => {
     const [profileData, setProfileData] = useState(null);
@@ -56,17 +57,17 @@ const Profile = () => {
 
     // Aquí va la logica para manejar el follow
     const handleFollow = (userId) => {
-        console.log(`Seguir a: ${userId}`); 
+        console.log(`Follow user: ${userId}`); 
     };
 
     // Aquí va la logica para manejar el reporte
     const handleReport = (userId) => {
-        console.log(`Reportar a: ${userId}`); 
+        console.log(`Report user: ${userId}`); 
     };
 
     // Aquí va la logica para manejar el mensaje 
     const handleSendMessage = (userId) => {
-        console.log(`Enviar mensaje a: ${userId}`); 
+        console.log(`Send message to user: ${userId}`); 
     };
 
     // Renderizando el contenido
@@ -117,6 +118,11 @@ const Profile = () => {
                         <button className="message-button" onClick={() => handleSendMessage(user.uid)}>Send Message</button>
                     </div>
                 ))}
+            </div>
+
+            {/* Notifications */}
+            <div className="notifications-section">
+                <Notifications /> {}
             </div>
         </div>
     );
