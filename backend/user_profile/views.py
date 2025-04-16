@@ -189,9 +189,10 @@ class RecommendedUsersView(APIView):
             return Response({'error': f'Error fetching recommended users: {str(e)}'}, status=400)
 
 
+
 class NotificationsView(APIView):
     """
-    Vista para obtener las notificaciones del usuario desde Firestore.
+    Vista para obtener las notificaciones del usuario desde Firestore (filtradas por UserId).
     """
     permission_classes = [FirebaseAuthentication]  # Usamos el permiso personalizado
 
@@ -202,33 +203,38 @@ class NotificationsView(APIView):
             return Response({'error': 'Authorization header is missing'}, status=400)
 
         try:
-            # Extraer el token del formato "Bearer <token>"
-            token = token.split(' ')[1]  # Esto es para separar "Bearer" del token real
+            token = token.split(' ')[1]
             decoded_token = firebase_auth.verify_id_token(token)
             uid = decoded_token.get('uid')
 
-            # Obtener las notificaciones del usuario desde Firestore
             db = firestore.client()
-            notifications_ref = db.collection('notifications').where('user_uid', '==', uid)
+            user_doc_ref = db.collection('users').document(uid)
+
+            notifications_ref = db.collection('notifications').where('UserId', '==', user_doc_ref)
             notifications = []
 
             for doc in notifications_ref.stream():
-                notification = doc.to_dict()
+                try:
+                    notification = doc.to_dict()
+                    notification['id'] = doc.id  
 
-                # Asegurarse de que el campo 'notificationDate' sea un Timestamp de Firestore
-                if isinstance(notification.get('notificationDate'), firestore.Timestamp):
-                    # Convertir el Timestamp a una cadena ISO 8601
-                    notification['notificationDate'] = notification['notificationDate'].isoformat()
+                    # Convertir el campo 'notificationDate' a una cadena ISO 8601 si es un Timestamp
+                    if 'notificationDate' in notification:
+                        notification['notificationDate'] = str(notification['notificationDate'])
 
-                notifications.append(notification)
+                    # Convertir 'UserId' a string si es un DocumentReference
+                    if 'UserId' in notification and isinstance(notification['UserId'], firestore.DocumentReference):
+                        notification['UserId'] = notification['UserId'].path  # Convertir a string
 
+                    print(f"Processed notification: {notification}")  # Log processed notification
+                    notifications.append(notification)
+                except Exception as e:
+                    print(f"Error processing document {doc.id}: {str(e)}")  
+
+            if not notifications:
+                return Response([], status=200)  
             return Response(notifications, status=200)
 
-        except IndexError:
-            return Response({'error': 'Token format is incorrect'}, status=400)
-        except firebase_auth.ExpiredIdTokenError:
-            return Response({'error': 'Token has expired'}, status=401)
-        except firebase_auth.InvalidIdTokenError:
-            return Response({'error': 'Invalid token'}, status=401)
         except Exception as e:
-            return Response({'error': f'Error fetching notifications: {str(e)}'}, status=400)
+            print(f"Unexpected error: {str(e)}") 
+            return Response({'error': f'Error fetching notifications: {str(e)}'}, status=500)
