@@ -1,26 +1,19 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaBell,
   FaSearch,
   FaPlus,
-  FaHeart, 
-  FaComment,
-  FaTh,    
-  FaList,  
-  FaHome,
-  FaUser,
-  FaFileAlt,
-  FaCommentDots,
-  FaDesktop,
-  FaCog,
-  FaUsers
+  FaHeart,
+  FaTh,
+  FaList,
+  FaUsers,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 
-const Header = () => {
+const Header = ({ currentUser }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
@@ -38,7 +31,7 @@ const Header = () => {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigate("/login");
+        navigate("/");
       })
       .catch((error) => {
         console.error("Error al cerrar sesión: ", error);
@@ -70,13 +63,18 @@ const Header = () => {
           </div>
         )}
         <div onClick={toggleProfileMenu} style={{ cursor: "pointer" }} className="d-flex align-items-center gap-2">
-          <img src="https://via.placeholder.com/40" alt="User" className="rounded-circle" />
-          <span className="d-none d-md-inline">Cuenta</span>
+        <img
+          src={currentUser?.photoURL || "https://via.placeholder.com/40"}
+          alt="User"
+          className="rounded-circle"
+          style={{ width: "40px", height: "40px", objectFit: "cover" }}
+        />
+          <span className="d-none d-md-inline">{currentUser?.displayName || currentUser?.email || "Cuenta"}</span>
         </div>
         {showProfileMenu && (
           <div className="position-absolute top-100 end-0 bg-white shadow p-3 rounded" style={{ zIndex: 1500, width: "200px" }}>
-            <p className="mb-0">Nombre de usuario</p>
-            <p className="text-muted">correo@ejemplo.com</p>
+            <p className="mb-0">{currentUser?.displayName || "Usuario"}</p>
+            <p className="text-muted">{currentUser?.email}</p>
             <button className="btn btn-primary btn-sm w-100">Ver perfil</button>
             <button className="btn btn-danger btn-sm w-100 mt-2" onClick={handleLogout}>Cerrar sesión</button>
           </div>
@@ -86,7 +84,7 @@ const Header = () => {
   );
 };
 
-const Posts = () => {
+const Posts = ({ currentUser }) => {
   const [posts, setPosts] = useState([
     {
       id: 1,
@@ -170,7 +168,7 @@ const Posts = () => {
     const newEntry = {
       ...newPost,
       id: posts.length + 1,
-      author: "Nuevo Usuario",
+      author: currentUser?.displayName || currentUser?.email || "Usuario",
       likes: 0,
       comments: [],
       likedBy: [],
@@ -194,7 +192,7 @@ const Posts = () => {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center">
-        <h2>Últimos posts</h2>
+      <h2>¡Bienvenid@, {currentUser?.displayName || currentUser?.email || "usuario"}!</h2>
         <div>
           <button className="btn btn-light" onClick={() => setViewMode("list")}>
             <FaList />
@@ -323,13 +321,24 @@ const Posts = () => {
   );
 };
 
-const Feed = () => (
-  <div className="d-flex flex-column min-vh-100">
-    <Header />
-    <main className="flex-grow-1 p-4">
-      <Posts />
-    </main>
-  </div>
-);
+const Feed = () => {
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <div className="d-flex flex-column min-vh-100">
+      <Header currentUser={currentUser} />
+      <main className="flex-grow-1 p-4">
+        <Posts currentUser={currentUser} />
+      </main>
+    </div>
+  );
+};
 
 export default Feed;
