@@ -115,7 +115,7 @@ const GestionContactos = () => {
   };
 
   return (
-    <div>
+    <div className="main-container">
       <h2>Contacts management</h2>
 
       <div className="toggle-container">
@@ -133,13 +133,15 @@ const GestionContactos = () => {
         </button>
       </div>
 
-      <input
-        type="text"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="search-bar"
-      />
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-bar"
+        />
+      </div>
 
       <div className="friends-list">
         {viewMode === "friends" ? (

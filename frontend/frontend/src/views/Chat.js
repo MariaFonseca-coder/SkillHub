@@ -64,13 +64,13 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !chatId || !currentUserId) return;
-
+  
     const nuevoMensaje = {
       text: newMessage,
       time: new Date().toISOString(),
       user: currentUserId
     };
-
+  
     try {
       const response = await fetch("http://localhost:8000/api/send-message/", {
         method: "POST",
@@ -80,12 +80,13 @@ const Chat = () => {
         body: JSON.stringify({
           chatId,
           text: newMessage,
-          userId: currentUserId
+          userId: currentUserId,
+          receiverId: friendId 
         })
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         setMessages((prev) => [...prev, nuevoMensaje]);
         setNewMessage("");
@@ -98,43 +99,44 @@ const Chat = () => {
   };
 
   return (
-    <div className="chat-container">
-      <div className="friend-info">
-        {friendData ? (
-          <>
-            
-            {friendData.fotoPerfil && (
-              <img src={friendData.fotoPerfil} alt="Foto de perfil" className="profile-pic" />
-            )}
-            <h3>{friendData.name}</h3>
-          </>
-        ) : (
-          <p>Cargando info del usuario...</p>
-        )}
-      </div>
-
-      <div className="messages-container">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.user === currentUserId ? "sent" : "received"}`}
-          >
-            {msg.text}
-          </div>
-        ))}
-      </div>
-
-      <div className="input-container">
-        <input
-          type="text"
-          className="chat-input"
-          placeholder="Write something..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <button className="send-button" onClick={handleSendMessage}>
-          Send
-        </button>
+    <div className="chat-wrapper">
+      <div className="chat-container">
+        <div className="friend-header">
+          {friendData ? (
+            <>
+              {friendData.fotoPerfil && (
+                <img className="profile-pic" src={friendData.fotoPerfil} alt="Foto de perfil" />
+              )}
+              <h3 className="friend-name">{friendData.name}</h3>
+            </>
+          ) : (
+            <p>Cargando info del usuario...</p>
+          )}
+        </div>
+  
+        <div className="messages-container">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`message ${msg.user === currentUserId ? "sent" : "received"}`}
+            >
+              {msg.text}
+            </div>
+          ))}
+        </div>
+  
+        <div className="input-container">
+          <input
+            type="text"
+            className="chat-input"
+            placeholder="Write something..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+          />
+          <button className="send-button" onClick={handleSendMessage}>
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

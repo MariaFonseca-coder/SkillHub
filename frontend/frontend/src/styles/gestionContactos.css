@@ -1,3 +1,15 @@
+.main-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.main-container {
+  max-width: 800px; /* o el valor que prefieras */
+  margin: 0 auto; /* esto lo centra horizontalmente */
+  padding: 20px; /* para darle algo de aire interno */
+}
+
 .friends-list {
   display: flex;
   flex-direction: column;
@@ -136,4 +148,9 @@
 .toggle-container .active-toggle {
   background-color: #3b82f6;
   color: white;
+}
+
+.search-container {
+  display: flex;
+  justify-content: center;
 }

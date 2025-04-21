@@ -477,30 +477,47 @@ class GetChatIdView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class SendMessageView(APIView):
     """
-    Guarda un nuevo mensaje en Firestore con chatId, texto, user y marca de tiempo.
+    Guarda un nuevo mensaje en Firestore y crea una notificación con datos específicos.
     """
 
     def post(self, request):
         chat_id = request.data.get("chatId")
         text = request.data.get("text")
-        user_id = request.data.get("userId")
+        user_id = request.data.get("userId")        # Remitente
+        receiver_id = request.data.get("receiverId")  # Receptor
 
-        if not chat_id or not text or not user_id:
-            return Response({"error": "Faltan parámetros (chatId, text o userId)."}, status=status.HTTP_400_BAD_REQUEST)
+        if not chat_id or not text or not user_id or not receiver_id:
+            return Response({"error": "Faltan parámetros (chatId, text, userId o receiverId)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            sender_ref = db.document(f"users/{user_id}")
+            receiver_ref = db.document(f"users/{receiver_id}")
+
+            # 1. Guardar el mensaje en la colección "message"
             message_data = {
                 "chatId": db.document(f"chat/{chat_id}"),
                 "text": text,
                 "time": datetime.utcnow(),
-                "user": db.document(f"users/{user_id}")
+                "user": sender_ref
             }
 
             db.collection("message").add(message_data)
 
-            return Response({"success": True, "message": "Mensaje enviado correctamente."}, status=status.HTTP_201_CREATED)
+            # 2. Crear la notificación con los valores quemados
+            notification_data = {
+                "UserId": receiver_ref,
+                "message": "You got a new message!",
+                "notificationDate": datetime.utcnow(),
+                "readed": False,
+                "type": "message"
+            }
+
+            db.collection("notifications").add(notification_data)
+
+            return Response({"success": True, "message": "Mensaje y notificación creados correctamente."}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
