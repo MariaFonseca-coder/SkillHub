@@ -32,6 +32,7 @@ class FirebaseSignupView(APIView):
         biography = ""
         privacy = "public"
         foto_perfil = ""
+        estado = "enabled" #annadido por Allan para manejar el deshabilitar cuenta
 
         try:
             # 1. Verificar el token con Firebase
@@ -70,7 +71,8 @@ class FirebaseSignupView(APIView):
                 'biografia': biography,
                 'privacidad': privacy,
                 'fotoPerfil': foto_perfil,
-                'role': role,
+                'role': role, 
+                'status': estado, #annadido por Allan para manejar el deshabilitar cuenta
                 'createdAt': firestore.SERVER_TIMESTAMP
             }, merge=True)
 
