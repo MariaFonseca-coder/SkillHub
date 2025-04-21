@@ -1,5 +1,5 @@
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FaBell,
   FaSearch,
@@ -8,10 +8,13 @@ import {
   FaTh,
   FaList,
   FaUsers,
+  FaShare,
+  FaFlag,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import firebase from "firebase/compat/app";
 
 const Header = ({ currentUser }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -30,12 +33,8 @@ const Header = ({ currentUser }) => {
 
   const handleLogout = () => {
     signOut(auth)
-      .then(() => {
-        navigate("/");
-      })
-      .catch((error) => {
-        console.error("Error al cerrar sesión: ", error);
-      });
+      .then(() => navigate("/"))
+      .catch((error) => console.error("Error al cerrar sesión: ", error));
   };
 
   return (
@@ -50,10 +49,11 @@ const Header = ({ currentUser }) => {
         </div>
       </div>
       <div className="d-flex align-items-center gap-3 position-relative">
-        <div className="d-flex align-items-center gap-1">
+        <Link to="/GestionContactos" className="btn btn-light d-flex align-items-center gap-1">
           <FaUsers className="text-secondary" />
           <span className="d-none d-md-inline">Amigos</span>
-        </div>
+        </Link>
+
         <button className="btn btn-light position-relative" onClick={toggleNotifications}>
           <FaBell className="text-secondary fs-4" />
         </button>
@@ -63,231 +63,229 @@ const Header = ({ currentUser }) => {
           </div>
         )}
         <div onClick={toggleProfileMenu} style={{ cursor: "pointer" }} className="d-flex align-items-center gap-2">
-        <img
-          src={currentUser?.photoURL || "https://via.placeholder.com/40"}
-          alt="User"
-          className="rounded-circle"
-          style={{ width: "40px", height: "40px", objectFit: "cover" }}
-        />
+          <img
+            src={currentUser?.photoURL || "https://via.placeholder.com/40"}
+            alt="User"
+            className="rounded-circle"
+            style={{ width: "40px", height: "40px", objectFit: "cover" }}
+          />
           <span className="d-none d-md-inline">{currentUser?.displayName || currentUser?.email || "Cuenta"}</span>
         </div>
         {showProfileMenu && (
           <div className="position-absolute top-100 end-0 bg-white shadow p-3 rounded" style={{ zIndex: 1500, width: "200px" }}>
-            <p className="mb-0">{currentUser?.displayName || "Usuario"}</p>
-            <p className="text-muted">{currentUser?.email}</p>
-            <button className="btn btn-primary btn-sm w-100">Ver perfil</button>
-            <button className="btn btn-danger btn-sm w-100 mt-2" onClick={handleLogout}>Cerrar sesión</button>
-          </div>
-        )}
+          <p className="mb-0">{currentUser?.displayName || "Usuario"}</p>
+          <p className="text-muted">{currentUser?.email}</p>
+          <Link to="/Profile" className="btn btn-primary btn-sm w-100 text-decoration-none text-white">
+            Ver perfil
+        </Link>
+    <button className="btn btn-danger btn-sm w-100 mt-2" onClick={handleLogout}>
+      Cerrar sesión
+    </button>
+  </div>
+)}
+
       </div>
     </header>
   );
 };
 
 const Posts = ({ currentUser }) => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      author: "David Fernández",
-      content: "Lorem ipsum dolor sit amet...",
-      category: "📄 Post",
-      likes: 0,
-      comments: [],
-      media: "",
-      likedBy: [],
-    },
-    {
-      id: 2,
-      author: "Daniela Solís",
-      content: "🎵 Música increíble",
-      category: "🎵 Música",
-      likes: 0,
-      comments: [],
-      media: "",
-      likedBy: [],
-    },
-    {
-      id: 3,
-      author: "Gabriel Sánchez",
-      content: "Lorem ipsum dolor sit amet...",
-      category: "📄 Post",
-      likes: 0,
-      comments: [],
-      media: "",
-      likedBy: [],
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [expandedPost, setExpandedPost] = useState(null);
-  const [newPost, setNewPost] = useState({
-    content: "",
-    category: "📄 Post",
-    media: null,
-  });
+  const [shareModal, setShareModal] = useState(false); // Modal para compartir
   const [viewMode, setViewMode] = useState("list");
+  const [expandedPost, setExpandedPost] = useState(null);
+  const [newPost, setNewPost] = useState({ content: "", category: "📄 Post", privacy: "public" });
+  const [shareText, setShareText] = useState(""); // Texto adicional para compartir
   const [fullScreenMedia, setFullScreenMedia] = useState(null);
-  const userId = "user123";
+  const [postIdToShare, setPostIdToShare] = useState(null); // Estado para guardar el id del post a compartir
 
-  const handleLike = (id) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === id) {
-          const hasLiked = post.likedBy.includes(userId);
-          if (hasLiked) {
-            return {
-              ...post,
-              likes: post.likes - 1,
-              likedBy: post.likedBy.filter((user) => user !== userId),
-            };
-          } else {
-            return {
-              ...post,
-              likes: post.likes + 1,
-              likedBy: [...post.likedBy, userId],
-            };
-          }
-        }
-        return post;
-      })
-    );
-  };
+  useEffect(() => {
+    const unsubscribe = db.collection("posts")
+      .orderBy("createdAt", "desc")
+      .onSnapshot((snapshot) => {
+        const fetchedPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setPosts(fetchedPosts);
+      });
+    return unsubscribe;
+  }, []);
 
-  const handleComment = (id, comment) => {
-    if (!comment) return;
-    setPosts(
-      posts.map((post) =>
-        post.id === id
-          ? { ...post, comments: [...post.comments, comment] }
-          : post
-      )
-    );
-  };
+  const handleAddPost = async () => {
+    if (!newPost.content.trim() || !currentUser) return;
 
-  const handleAddPost = () => {
-    if (!newPost.content.trim()) return;
-    const newEntry = {
-      ...newPost,
-      id: posts.length + 1,
-      author: currentUser?.displayName || currentUser?.email || "Usuario",
-      likes: 0,
+    await db.collection("posts").add({
+      content: newPost.content,
+      category: newPost.category,
+      authorId: currentUser.uid,
+      author: currentUser.displayName || currentUser.email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      likes: [],
       comments: [],
-      likedBy: [],
-    };
-    setPosts([newEntry, ...posts]);
+      privacy: newPost.privacy,
+      reports: [],
+      sharedBy: [],
+    });
+    setNewPost({ content: "", category: "📄 Post", privacy: "public" });
     setShowModal(false);
-    setNewPost({ content: "", category: "📄 Post", media: null });
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewPost({ ...newPost, media: URL.createObjectURL(file) });
+  const handleLike = async (postId) => {
+    const postRef = db.collection("posts").doc(postId);
+    const doc = await postRef.get();
+    const likedBy = doc.data().likes || [];
+
+    const alreadyLiked = likedBy.includes(currentUser.uid);
+    const newLikes = alreadyLiked
+      ? likedBy.filter((id) => id !== currentUser.uid)
+      : [...likedBy, currentUser.uid];
+
+    await postRef.update({ likes: newLikes });
+  };
+
+  const handleComment = async (postId, comment) => {
+    const postRef = db.collection("posts").doc(postId);
+    await postRef.update({
+      comments: firebase.firestore.FieldValue.arrayUnion({
+        text: comment,
+        author: currentUser.displayName || currentUser.email,
+      }),
+    });
+  };
+
+  const handleReport = async (postId) => {
+    const postRef = db.collection("posts").doc(postId);
+    await postRef.update({
+      reports: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+    });
+    alert("Has reportado esta publicación.");
+  };
+
+  const handleShare = (postId) => {
+    setPostIdToShare(postId); // Establecer el postId del post que se va a compartir
+    setShareModal(true); // Mostrar el modal de compartir
+    setShareText(""); // Limpiar el texto adicional
+  };
+
+  const handleConfirmShare = async () => {
+    try {
+      const postRef = db.collection("posts").doc(postIdToShare);
+      const postSnapshot = await postRef.get();
+      const postData = postSnapshot.data();
+
+      if (!postData) {
+        console.error("Post no encontrado.");
+        return;
+      }
+
+      // Crear un nuevo post como compartido
+      await db.collection("posts").add({
+        content: postData.content, // El contenido original del post
+        category: postData.category,
+        authorId: currentUser.uid,
+        author: currentUser.displayName || currentUser.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        likes: [],
+        comments: [],
+        privacy: postData.privacy, // Mantener la misma privacidad
+        reports: [],
+        sharedBy: [currentUser.displayName || currentUser.email], // Agregar el nombre del usuario que lo compartió
+        sharedFrom: postIdToShare, // Relacionar con el post original
+        additionalText: shareText || "", // El texto adicional que el usuario escribió
+      });
+
+      alert("¡Has compartido esta publicación dentro de SkillHub!");
+      setShareModal(false); // Cerrar el modal de compartir
+    } catch (error) {
+      console.error("Error al compartir dentro de la app:", error);
+      alert("Ocurrió un error al compartir la publicación.");
     }
   };
+
+  const handleDeletePost = async (postId) => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta publicación?")) {
+      await db.collection("posts").doc(postId).delete();
+    }
+  };
+  
+  const handleEditPost = async (postId) => {
+    const newContent = prompt("Edita tu publicación:");
+    if (newContent && newContent.trim()) {
+      await db.collection("posts").doc(postId).update({
+        content: newContent.trim()
+      });
+    }
+  };  
 
   const togglePostExpand = (id) => {
     setExpandedPost(expandedPost === id ? null : id);
   };
-
+  
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center">
-      <h2>¡Bienvenid@, {currentUser?.displayName || currentUser?.email || "usuario"}!</h2>
+        <h2>¡Bienvenid@, {currentUser?.displayName || currentUser?.email || "usuario"}!</h2>
         <div>
-          <button className="btn btn-light" onClick={() => setViewMode("list")}>
-            <FaList />
-          </button>
-          <button className="btn btn-light ms-2" onClick={() => setViewMode("grid")}>
-            <FaTh />
-          </button>
-          <button className="btn btn-primary ms-2" onClick={() => setShowModal(true)}>
-            <FaPlus /> Agregar
-          </button>
+          <button className="btn btn-light" onClick={() => setViewMode("list") }><FaList /></button>
+          <button className="btn btn-light ms-2" onClick={() => setViewMode("grid") }><FaTh /></button>
+          <button className="btn btn-primary ms-2" onClick={() => setShowModal(true)}><FaPlus /> Agregar</button>
         </div>
       </div>
+  
       <div className={`mt-3 ${viewMode === "grid" ? "d-flex flex-wrap gap-3" : ""}`}>
         {posts.map((post) => (
-          <div key={post.id} className={`card mb-3 shadow-sm ${viewMode === "grid" ? "p-2" : ""}`}>
-            <div
-              className="card-body"
-              onClick={() => togglePostExpand(post.id)}
-              style={{ cursor: "pointer" }}
-            >
-              <h5 className="d-flex justify-content-between">
-                <span>{post.author}</span>
-                <span className="badge bg-secondary">{post.category}</span>
-              </h5>
-              {post.media && (
-                <img
-                  src={post.media}
-                  alt="Adjunto"
-                  className="img-fluid rounded mb-2"
-                  style={{
-                    width: "80%",
-                    maxWidth: "300px",
-                    height: "auto",
-                    aspectRatio: "1/1",
-                    objectFit: "cover",
-                    cursor: "pointer",
-                    display: "block",
-                    margin: "0 auto",
-                  }}
-                  onClick={() => setFullScreenMedia(post.media)}
-                />
-              )}
-              <p>{post.content}</p>
-            </div>
-            {expandedPost === post.id && (
-              <div className="p-3 border-top">
-                <button className="btn btn-light" onClick={() => handleLike(post.id)}>
-                  <FaHeart className={post.likedBy.includes(userId) ? "text-danger" : ""} />{" "}
-                  {post.likes}
-                </button>
-                <input
-                  type="text"
-                  className="form-control mt-2"
-                  placeholder="Escribe un comentario..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target.value.trim() !== "") {
+          (post.privacy === "public" || post.authorId === currentUser?.uid) && (
+            <div key={post.id} className={`card mb-3 shadow-sm ${viewMode === "grid" ? "p-2" : ""}`}>
+              <div className="card-body" onClick={() => togglePostExpand(post.id)} style={{ cursor: "pointer" }}>
+                <h5 className="d-flex justify-content-between">
+                  <span>{post.author}</span>
+                  <span className="badge bg-secondary">{post.category}</span>
+                </h5>
+                {post.sharedBy?.length > 0 && (
+                  <p className="text-muted"><small>Compartido por: {post.sharedBy.join(", ")}</small></p>
+                )}
+                <p>{post.content}</p>
+                {post.additionalText && (
+                  <p className="text-muted"><small>Texto adicional: {post.additionalText}</small></p>
+                )}
+              </div>
+  
+              {expandedPost === post.id && (
+                <div className="p-3 border-top">
+                  <button className="btn btn-light me-2" onClick={() => handleLike(post.id)}>
+                    <FaHeart className={post.likes?.includes(currentUser.uid) ? "text-danger" : ""} /> {post.likes?.length || 0}
+                  </button>
+                  <button className="btn btn-light me-2" onClick={() => handleShare(post.id)}><FaShare /></button>
+                  {post.authorId === currentUser.uid && (
+                    <>
+                      <button className="btn btn-outline-warning btn-sm me-2" onClick={() => handleEditPost(post.id)}>Editar</button>
+                      <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeletePost(post.id)}>Eliminar</button>
+                    </>
+                  )}
+                  {post.authorId !== currentUser.uid && (
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => handleReport(post.id)}><FaFlag /> Reportar</button>
+                  )}
+  
+                  <input type="text" className="form-control mt-2" placeholder="Escribe un comentario..." onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.value.trim()) {
                       handleComment(post.id, e.target.value);
                       e.target.value = "";
                     }
-                  }}
-                />
-                {post.comments.length > 0 ? (
-                  <div className="mt-2">
-                    <h6>Comentarios</h6>
-                    <ul className="list-group">
-                      {post.comments.map((comment, index) => (
-                        <li key={index} className="list-group-item">
-                          {comment}
-                        </li>
+                  }} />
+  
+                  {post.comments?.length > 0 && (
+                    <ul className="list-group mt-3">
+                      {post.comments.map((c, i) => (
+                        <li key={i} className="list-group-item"><strong>{c.author}:</strong> {c.text}</li>
                       ))}
                     </ul>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-muted">No hay comentarios.</p>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
         ))}
       </div>
-
-      {fullScreenMedia && (
-        <div className="modal-overlay" onClick={() => setFullScreenMedia(null)}>
-          <div className="modal show d-block" tabIndex="-1" role="dialog">
-            <div className="modal-dialog modal-dialog-centered" role="document">
-              <div className="modal-content">
-                <div className="modal-body p-0">
-                  <img src={fullScreenMedia} alt="Fullscreen" className="img-fluid w-100" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Modal para agregar un post */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal show d-block" tabIndex="-1" role="dialog">
@@ -301,16 +299,64 @@ const Posts = ({ currentUser }) => {
                   <textarea
                     className="form-control"
                     rows="3"
-                    placeholder="Escribe algo..."
+                    placeholder="Escribe tu post..."
                     value={newPost.content}
                     onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                  ></textarea>
-                  <input type="file" className="form-control mt-3" onChange={handleFileUpload} />
-                  <div className="mt-3">
-                    <button className="btn btn-primary w-100" onClick={handleAddPost}>
-                      Publicar
-                    </button>
+                  />
+                  <div className="mt-2">
+                    <select
+                      className="form-control"
+                      value={newPost.category}
+                      onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                    >
+                      <option value="📄 Post">📄 Post</option>
+                      <option value="📸 Imagen">📸 Imagen</option>
+                      <option value="🎥 Video">🎥 Video</option>
+                    </select>
                   </div>
+                  <div className="mt-2">
+                    <select
+                      className="form-control"
+                      value={newPost.privacy}
+                      onChange={(e) => setNewPost({ ...newPost, privacy: e.target.value })}
+                    >
+                      <option value="public">Público</option>
+                      <option value="private">Privado</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cerrar</button>
+                  <button type="button" className="btn btn-primary" onClick={handleAddPost}>Agregar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de compartir */}
+      {shareModal && (
+        <div className="modal-overlay">
+          <div className="modal show d-block" tabIndex="-1" role="dialog">
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Compartir publicación</h5>
+                  <button type="button" className="btn-close" onClick={() => setShareModal(false)}></button>
+                </div>
+                <div className="modal-body">
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    placeholder="Escribe algo..."
+                    value={shareText}
+                    onChange={(e) => setShareText(e.target.value)}
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShareModal(false)}>Cerrar</button>
+                  <button type="button" className="btn btn-primary" onClick={handleConfirmShare}>Compartir</button>
                 </div>
               </div>
             </div>
@@ -319,26 +365,25 @@ const Posts = ({ currentUser }) => {
       )}
     </div>
   );
+  
 };
 
-const Feed = () => {
+export default function Feed() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribe();
+    const unsubscribe = onAuthStateChanged(auth, setCurrentUser);
+    return unsubscribe;
   }, []);
 
-  return (
-    <div className="d-flex flex-column min-vh-100">
-      <Header currentUser={currentUser} />
-      <main className="flex-grow-1 p-4">
-        <Posts currentUser={currentUser} />
-      </main>
-    </div>
-  );
-};
+  if (!currentUser) {
+    return <div>Cargando...</div>;
+  }
 
-export default Feed;
+  return (
+    <>
+      <Header currentUser={currentUser} />
+      <Posts currentUser={currentUser} />
+    </>
+  );
+}
