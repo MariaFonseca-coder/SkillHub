@@ -227,7 +227,7 @@ class FriendListView(APIView):
                     friend_data = friend_doc.to_dict()
                     friends.append({
                         "id": friend_id,
-                        "name": friend_data.get("displayName", "Desconocido"),
+                        "name": friend_data.get("name", "Desconocido"),
                         "fotoPerfil": friend_data.get("fotoPerfil", "")
                     })
 
@@ -274,7 +274,7 @@ class FollowersListView(APIView):
                         follower_data = follower_doc.to_dict()
                         followers.append({
                             "id": follower_id,
-                            "name": follower_data.get("displayName", "Desconocido"),
+                            "name": follower_data.get("name", "Desconocido"),
                             "fotoPerfil": follower_data.get("fotoPerfil", "")
                         })
 
@@ -392,7 +392,7 @@ class DeleteFollowerView(APIView):
 
 class GetUserInfoView(APIView):
     """
-    Devuelve el displayName y la fotoPerfil de un usuario a partir de su ID.
+    Devuelve el name y la fotoPerfil de un usuario a partir de su ID.
     """
 
     def get(self, request):
@@ -410,7 +410,7 @@ class GetUserInfoView(APIView):
             user_data = user_ref.to_dict()
             return Response({
                 "id": friend_id,
-                "displayName": user_data.get("displayName", "Desconocido"),
+                "name": user_data.get("name", "Desconocido"),
                 "fotoPerfil": user_data.get("fotoPerfil", "")
             }, status=status.HTTP_200_OK)
 

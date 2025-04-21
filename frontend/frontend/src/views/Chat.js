@@ -8,7 +8,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [friendData, setFriendData] = useState(null);
   const [chatId, setChatId] = useState(null);
-  const [currentUserId, setCurrentUserId] = useState(null); // 👈 nuevo estado
+  const [currentUserId, setCurrentUserId] = useState(null); 
 
   const { friendId } = useParams();
 
@@ -16,13 +16,13 @@ const Chat = () => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setCurrentUserId(user.uid); // ✅ guardamos el uid real
+        setCurrentUserId(user.uid); 
       } else {
         console.log("Usuario no autenticado");
       }
     });
 
-    return () => unsubscribe(); // limpieza
+    return () => unsubscribe(); 
   }, []);
 
   useEffect(() => {
@@ -102,10 +102,11 @@ const Chat = () => {
       <div className="friend-info">
         {friendData ? (
           <>
-            <h3>{friendData.displayName}</h3>
+            
             {friendData.fotoPerfil && (
               <img src={friendData.fotoPerfil} alt="Foto de perfil" className="profile-pic" />
             )}
+            <h3>{friendData.name}</h3>
           </>
         ) : (
           <p>Cargando info del usuario...</p>

@@ -13,6 +13,7 @@ from rest_framework import status as rest_status
 
 db = firestore.client()
 
+#LISTA LOS USUARIOS 
 class UserListView(APIView):
     def get(self, request):
         try:
@@ -25,11 +26,11 @@ class UserListView(APIView):
                 user_data = user.to_dict()
                 users.append({
                     "id": user.id,
-                    "displayName": user_data.get("displayName", "Desconocido"),
+                    "name": user_data.get("name", "Desconocido"),
                     "fotoPerfil": user_data.get("fotoPerfil", ""),
                     "role": user_data.get("role", ""),
                     "createdAt": user_data.get("createdAt", ""),
-                    "status": user_data.get("status", "")  # 👈 Campo agregado aquí
+                    "status": user_data.get("status", "")  
                 })
 
             return Response({"users": users}, status=status.HTTP_200_OK)
@@ -37,7 +38,7 @@ class UserListView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
+#CAMBIA EL STATUS DE UN USUARIO A ENABLED
 class EnableUserView(APIView):
     def post(self, request):
         try:
@@ -59,6 +60,7 @@ class EnableUserView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=rest_status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+#CAMBIA EL STATUS DE UN USUARIO A DISABLED
 class DisableUserView(APIView):
     def post(self, request):
         try:
@@ -80,7 +82,7 @@ class DisableUserView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=rest_status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# LISTA TODOS LOS REPORTES
 class ReportListView(APIView):
     def get(self, request):
         try:
@@ -91,6 +93,11 @@ class ReportListView(APIView):
 
             for report in query:
                 report_data = report.to_dict()
+
+                # Obtener referencia a postReported
+                post_reported_ref = report_data.get("postReported", None)
+                post_id = post_reported_ref.id if post_reported_ref else "Sin referencia"
+                post_path = post_reported_ref.path if post_reported_ref else "Sin ruta"
 
                 # Obtener referencia al documento de userReported
                 user_reported_ref = report_data.get("userReported", None)
@@ -107,15 +114,109 @@ class ReportListView(APIView):
                 reports.append({
                     "id": report.id,
                     "description": report_data.get("description", "").strip('"'),
-                    "postReported": str(report_data.get("postReported", "")),
+                    "postReported": post_id,
+                    "postReportedPath": post_path,
                     "reportDate": str(report_data.get("reportDate", "")),
                     "state": report_data.get("state", "").strip('"'),
                     "userId": str(report_data.get("userId", "")),
-                    "userReported": str(user_reported_ref),
-                    "userReportedName": user_reported_name
+                    "userReported": str(user_reported_ref.path) if user_reported_ref else "Sin referencia",
+                    "userReportedName": user_reported_name,
+                    "type": report_data.get("type", "").strip('"')
                 })
 
             return Response({"reports": reports}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+#CAMBIA EL STATUS DE UN REPORTE A DENIED Y ASI YA NO SALE EN FRONTEND
+class DenyReportView(APIView):
+    def post(self, request, report_id):
+        try:
+            report_ref = db.collection("reports").document(report_id)
+            report_doc = report_ref.get()
+
+            if not report_doc.exists:
+                return Response({"error": "Report not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            report_ref.update({"state": "denied"})
+
+            return Response({"message": f"Report {report_id} has been denied."}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+# DELETE UN POST EN FIRESTORE A PARTIR DE SU ID
+class DeletePostView(APIView):
+     def patch(self, request, post_id):
+        try:
+            new_status = request.data.get("status")
+            if new_status not in ["enabled", "disabled"]:
+                return Response({"error": "Estado inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+            post_ref = db.collection("posts").document(post_id)
+            post_doc = post_ref.get()
+
+            if not post_doc.exists:
+                return Response({"error": "El post no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+            post_ref.update({"status": new_status})
+            return Response({"message": f"Post updated {new_status}."}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+# DESHABILITA UN USUARIO REPORTADO
+class DisableReportedUserView(APIView):
+    def delete(self, request, user_id):
+        try:
+            user_ref = db.collection("users").document(user_id)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return Response({"error": "El usuario no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+            user_ref.update({"status": "disabled"})
+            return Response({"message": "Usuario deshabilitado exitosamente."}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# OBTIENE ID Y STATUS DE UN POST ESPECÍFICO
+class GetPostStatusView(APIView):
+    def get(self, request, post_id):
+        try:
+            post_ref = db.collection("posts").document(post_id)
+            post_doc = post_ref.get()
+
+            if not post_doc.exists:
+                return Response({"error": "El post no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+            post_data = post_doc.to_dict()
+            return Response({
+                "id": post_id,
+                "status": post_data.get("status", "Desconocido")
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# OBTIENE ID Y STATUS DE UN USUARIO ESPECÍFICO
+class GetUserStatusView(APIView):
+    def get(self, request, user_id):
+        try:
+            user_ref = db.collection("users").document(user_id)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return Response({"error": "El usuario no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+            user_data = user_doc.to_dict()
+            return Response({
+                "id": user_id,
+                "status": user_data.get("status", "Desconocido")
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
