@@ -2,7 +2,7 @@
 from django.urls import path
 from .views import FirebaseLoginView, FirebaseSignupView, password_reset_request, PasswordResetRequestView, FriendListView, DeleteFriendshipView, GetUserInfoView, GetChatIdView, SendMessageView, FollowersListView, DeleteFollowerView
 
-from .admin.views import UserListView, EnableUserView, DisableUserView, ReportListView, DenyReportView, DeletePostView, DisableReportedUserView, GetPostStatusView, GetUserStatusView
+from .admin.views import UserListView, EnableUserView, DisableUserView, ReportListView, DenyReportView, DeletePostView, DisableReportedUserView, GetPostStatusView, GetUserStatusView, GetAllPostsView
 
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('disable-user/<str:user_id>/', DisableReportedUserView.as_view(), name='disable-user'),
     path('get-post-status/<str:post_id>/', GetPostStatusView.as_view()),
     path('get-user-status/<str:user_id>/', GetUserStatusView.as_view()),
+    path('list-posts/', GetAllPostsView.as_view(), name='list-posts'),
 
 
 ]

@@ -218,7 +218,7 @@ const Dashboard = () => {
   
       if (response.ok) {
         const newStatus = isCurrentlyDisabled ? "enabled" : "disabled";
-        alert(`Usuario actualizado a estado: ${newStatus}`);
+        alert(`User ${newStatus}`);
         setUserStatuses(prevStatuses => ({
           ...prevStatuses,
           [userId]: newStatus
@@ -238,7 +238,7 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <div className="dashboard-box">
         <h1>Administration panel</h1>
-        <p>Manage users and reports made by users</p>
+        <p>Manage users and reports</p>
 
         <div className="dashboard-toggle">
           <button
@@ -277,7 +277,9 @@ const Dashboard = () => {
                     />
                     <div className="friend-info">
                       <span className="friend-name">{user.name}</span>
+                      <br></br>
                       <span className="friend-role"><strong>Role:</strong> {user.role}</span>
+                      <br></br>
                       <span className="friend-role"><strong>Status:</strong> {user.status}</span>
 
                     </div>
@@ -303,11 +305,17 @@ const Dashboard = () => {
                   .map((report) => (
                     <div key={report.id} className="report-card">
                       <div className="report-info"> 
-                        <p><strong>Description:</strong> {report.description}</p>
+                        <p><strong>Reason:</strong> {report.description ? report.description : "No information provided"}</p>
                         <p><strong>State:</strong> {report.state}</p>
                         <p><strong>Reported Post:</strong> {console.log("POST REPORTADO:", report.postReported)} {report.postReported}</p>
-
                         <p><strong>Report Date:</strong> {new Date(report.reportDate).toLocaleString()}</p>
+                        <p><strong>Post media:</strong></p>
+                        {report.postMediaUrl ? (
+                          <img src={report.postMediaUrl} alt="Post Media" style={{ maxWidth: "500px", maxHeight: "500px", width: "auto", height: "auto" }} />
+                        ) : (
+                          <p>No media uploaded.</p>
+                        )}
+                        <p><strong>Post description: </strong> {report.postContent ? report.postContent : "No description available"}</p>
                         <p><strong>Reported user:</strong> {report.userReportedName}</p>
                       </div>
                       <div className="report-actions">
@@ -344,10 +352,13 @@ const Dashboard = () => {
                   .map((report) => (
                     <div key={report.id} className="report-card">
                       <div className="report-info">
-                        <p><strong>Description:</strong> {report.description}</p>
+                        <p><strong>Reason:</strong> {report.description ? report.description : "No information provided"}</p>                        
                         <p><strong>State:</strong> {report.state}</p>
                         <p><strong>Report Date:</strong> {new Date(report.reportDate).toLocaleString()}</p>
                         <p><strong>Reported user:</strong> {report.userReportedName}</p>
+                        <img src={report.userReportedPhoto} alt="Profile" style={{ width: "100px", height: "100px", borderRadius: "50%" }} />
+                        <p><strong>Biography:</strong> {report.userReportedBio ? report.userReportedBio : "No biography available"}</p>
+
                       </div>
                       <div className="report-actions">
                       <button

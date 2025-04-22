@@ -82,7 +82,6 @@ class DisableUserView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=rest_status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# LISTA TODOS LOS REPORTES
 class ReportListView(APIView):
     def get(self, request):
         try:
@@ -99,28 +98,51 @@ class ReportListView(APIView):
                 post_id = post_reported_ref.id if post_reported_ref else "Sin referencia"
                 post_path = post_reported_ref.path if post_reported_ref else "Sin ruta"
 
+                post_content = "Sin contenido"
+                post_media_url = "Sin media"
+
+                if post_reported_ref:
+                    try:
+                        post_reported_doc = post_reported_ref.get()
+                        post_data = post_reported_doc.to_dict()
+                        post_content = post_data.get("content", "Sin contenido")
+                        post_media_url = post_data.get("mediaUrl", "Sin media")
+                    except Exception as e:
+                        post_content = f"Error al obtener contenido: {e}"
+                        post_media_url = "Error al obtener media"
+
                 # Obtener referencia al documento de userReported
                 user_reported_ref = report_data.get("userReported", None)
                 user_reported_name = "Desconocido"
+                user_biografia = "Sin biografía"
+                user_foto_perfil = "Sin foto"
 
                 if user_reported_ref:
                     try:
                         user_reported_doc = user_reported_ref.get()
                         user_reported_data = user_reported_doc.to_dict()
                         user_reported_name = user_reported_data.get("name", "Desconocido")
+                        user_biografia = user_reported_data.get("biografia", "Sin biografía")
+                        user_foto_perfil = user_reported_data.get("fotoPerfil", "Sin foto")
                     except Exception as e:
                         user_reported_name = f"Error al obtener nombre: {e}"
+                        user_biografia = "Error al obtener biografía"
+                        user_foto_perfil = "Error al obtener foto"
 
                 reports.append({
                     "id": report.id,
                     "description": report_data.get("description", "").strip('"'),
                     "postReported": post_id,
                     "postReportedPath": post_path,
+                    "postContent": post_content,
+                    "postMediaUrl": post_media_url,
                     "reportDate": str(report_data.get("reportDate", "")),
                     "state": report_data.get("state", "").strip('"'),
                     "userId": str(report_data.get("userId", "")),
                     "userReported": str(user_reported_ref.path) if user_reported_ref else "Sin referencia",
                     "userReportedName": user_reported_name,
+                    "userReportedBio": user_biografia,
+                    "userReportedPhoto": user_foto_perfil,
                     "type": report_data.get("type", "").strip('"')
                 })
 
@@ -128,6 +150,7 @@ class ReportListView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 #CAMBIA EL STATUS DE UN REPORTE A DENIED Y ASI YA NO SALE EN FRONTEND
@@ -162,7 +185,7 @@ class DeletePostView(APIView):
                 return Response({"error": "El post no existe."}, status=status.HTTP_404_NOT_FOUND)
 
             post_ref.update({"status": new_status})
-            return Response({"message": f"Post updated {new_status}."}, status=status.HTTP_200_OK)
+            return Response({"message": f"Post {new_status}."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -220,3 +243,80 @@ class GetUserStatusView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from rest_framework import status  
+from rest_framework import status  
+
+class GetAllPostsView(APIView):
+    def get(self, request):
+        try:
+            posts_ref = db.collection("posts")
+            posts = posts_ref.stream()
+
+            posts_list = []
+            palabras_prohibidas = ["hola", "test", "puta", "idiota","hijueputa", "estupido","imbecil", "tarado","", "test","hola", "test","hola", "test","hola", "test","hola", "test","hola", "test"]
+            palabra_detectada = False
+
+            for post in posts:
+                try:
+                    post_data = post.to_dict()
+                    post_status = post_data.get("status", "Desconocido")
+
+                    content = post_data.get("content", "Sin contenido")
+
+                    if post_status.lower() == "enabled":
+                        for palabra in palabras_prohibidas:
+                            if palabra.lower() in content.lower():
+                                palabra_detectada = True
+                                print("✅ Palabra identificada en algún post")
+
+                                db.collection("posts").document(post.id).update({
+                                    "status": "disabled"
+                                })
+                                print(f"🔄 Post con ID {post.id} actualizado a 'disabled'")
+                                break
+
+                    filtered_post = {
+                        "id": post.id,
+                        "content": content,
+                        "status": post_data.get("status", "Desconocido")  
+                    }
+                    posts_list.append(filtered_post)
+
+                except Exception as e:
+                    print(f"⚠️ Error al procesar post {post.id}: {e}")
+
+            response_data = {"posts": posts_list}
+            if palabra_detectada:
+                response_data["mensaje"] = "Palabra identificada y post(s) desactivado(s)"
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print("🔥 ERROR en GetAllPostsView:", str(e))
+            import traceback
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+import requests
+import time
+
+def check_posts_periodically():
+    while True:
+        try:
+            response = requests.get("http://127.0.0.1:8000/api/list-posts/")
+            if response.status_code == 200:
+                data = response.json()
+                if "mensaje" in data and data["mensaje"] == "Palabra identificada":
+                    print("Word identified")
+                else:
+                    print("All clean")
+            else:
+                print(f"⚠️ Falló la solicitud: {response.status_code}")
+        except Exception as e:
+            print(f"🔥 Error consultando el endpoint: {e}")
+
+        time.sleep(300)  # se ajusta tiempo aqui

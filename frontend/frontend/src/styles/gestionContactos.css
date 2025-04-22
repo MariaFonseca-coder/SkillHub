@@ -47,7 +47,7 @@
 
 .delete-btn,
 .message-btn {
-  background: #007bff;
+  background: #0047AB;
   color: white;
   border: none;
   padding: 8px 12px;
@@ -58,15 +58,15 @@
 }
 
 .delete-btn {
-  background: #dc3545;
+  background: #b92b3f;
 }
 
 .delete-btn:hover {
-  background: #c82333;
+  background: #b92b3f;
 }
 
 .message-btn:hover {
-  background: #0056b3;
+  background: #0047AB;
 }
 
 /* Fondo oscuro para el modal */
@@ -106,12 +106,12 @@
 }
 
 .modal-btn.yes {
-  background-color: #4CAF50; /* Verde */
+  background-color: #0047AB; /* Verde */
   color: white;
 }
 
 .modal-btn.no {
-  background-color: #f44336; /* Rojo */
+  background-color: #b92b3f; /* Rojo */
   color: white;
 }
 
@@ -146,7 +146,7 @@
 }
 
 .toggle-container .active-toggle {
-  background-color: #3b82f6;
+  background-color: #0047AB;
   color: white;
 }
 

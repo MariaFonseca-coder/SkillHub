@@ -99,47 +99,54 @@ const Chat = () => {
   };
 
   return (
-    <div className="chat-wrapper">
-      <div className="chat-container">
-        <div className="friend-header">
-          {friendData ? (
-            <>
-              {friendData.fotoPerfil && (
-                <img className="profile-pic" src={friendData.fotoPerfil} alt="Foto de perfil" />
-              )}
-              <h3 className="friend-name">{friendData.name}</h3>
-            </>
-          ) : (
-            <p>Cargando info del usuario...</p>
-          )}
-        </div>
+    <div className="layout-wrapper">
+      <div className="side-band left-band" />
+      
+      <div className="chat-wrapper">
+        <div className="chat-container">
+          <div className="friend-header">
+            {friendData ? (
+              <>
+                {friendData.fotoPerfil && (
+                  <img className="profile-pic" src={friendData.fotoPerfil} alt="Foto de perfil" />
+                )}
+                <h3 className="friend-name">{friendData.name}</h3>
+              </>
+            ) : (
+              <p>Cargando info del usuario...</p>
+            )}
+          </div>
   
-        <div className="messages-container">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${msg.user === currentUserId ? "sent" : "received"}`}
-            >
-              {msg.text}
-            </div>
-          ))}
-        </div>
+          <div className="messages-container">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`message ${msg.user === currentUserId ? "sent" : "received"}`}
+              >
+                {msg.text}
+              </div>
+            ))}
+          </div>
   
-        <div className="input-container">
-          <input
-            type="text"
-            className="chat-input"
-            placeholder="Write something..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-          />
-          <button className="send-button" onClick={handleSendMessage}>
-            Send
-          </button>
+          <div className="input-container">
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Write something..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
+            <button className="send-button" onClick={handleSendMessage}>
+              Send
+            </button>
+          </div>
         </div>
       </div>
+  
+      <div className="side-band right-band" />
     </div>
   );
+  
 };
 
 export default Chat;
