@@ -184,7 +184,23 @@
 .recommended-user .follow-button:hover {
     background-color: #27ae60; 
 }
+.message-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
 
+.message-btn:hover {
+    background-color: #0056b3;
+}
 
 .recommended-user .report-button {
     background-color: #e74c3c; 

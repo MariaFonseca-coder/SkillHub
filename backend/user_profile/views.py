@@ -6,7 +6,7 @@ from firebase_admin import firestore
 from firebase_admin import auth as firebase_auth
 from .permissions import FirebaseAuthentication  #
 from datetime import datetime
-
+from rest_framework.permissions import AllowAny
 class ProfileView(APIView):
     """
     Vista para obtener el perfil de usuario desde Firestore.
@@ -192,9 +192,9 @@ class RecommendedUsersView(APIView):
 
 class NotificationsView(APIView):
     """
-    Vista para obtener las notificaciones del usuario desde Firestore (filtradas por UserId).
+    View to handle notifications for the user.
     """
-    permission_classes = [FirebaseAuthentication]  # Usamos el permiso personalizado
+    permission_classes = [AllowAny]  #
 
     def get(self, request):
         token = request.headers.get('Authorization')
@@ -216,25 +216,64 @@ class NotificationsView(APIView):
             for doc in notifications_ref.stream():
                 try:
                     notification = doc.to_dict()
-                    notification['id'] = doc.id  
+                    notification['id'] = doc.id
 
-                    # Convertir el campo 'notificationDate' a una cadena ISO 8601 si es un Timestamp
+                    # Convert 'notificationDate' to ISO 8601 string if it's a Timestamp
                     if 'notificationDate' in notification:
                         notification['notificationDate'] = str(notification['notificationDate'])
 
-                    # Convertir 'UserId' a string si es un DocumentReference
+                    # Convert 'UserId' to string if it's a DocumentReference
                     if 'UserId' in notification and isinstance(notification['UserId'], firestore.DocumentReference):
-                        notification['UserId'] = notification['UserId'].path  # Convertir a string
+                        notification['UserId'] = notification['UserId'].path
 
-                    print(f"Processed notification: {notification}")  # Log processed notification
                     notifications.append(notification)
                 except Exception as e:
-                    print(f"Error processing document {doc.id}: {str(e)}")  
+                    print(f"Error processing document {doc.id}: {str(e)}")
 
-            if not notifications:
-                return Response([], status=200)  
             return Response(notifications, status=200)
 
         except Exception as e:
-            print(f"Unexpected error: {str(e)}") 
+            print(f"Unexpected error: {str(e)}")
             return Response({'error': f'Error fetching notifications: {str(e)}'}, status=500)
+
+    def put(self, request):
+        """
+        Update a specific notification (e.g., mark it as read).
+        """
+        token = request.headers.get('Authorization')
+
+        if not token:
+            return Response({'error': 'Authorization header is missing'}, status=400)
+
+        try:
+            token = token.split(' ')[1]
+            decoded_token = firebase_auth.verify_id_token(token)
+            uid = decoded_token.get('uid')
+
+            notification_id = request.data.get('notificationId')
+            if not notification_id:
+                return Response({'error': 'Notification ID is required'}, status=400)
+
+            db = firestore.client()
+            notification_ref = db.collection('notifications').document(notification_id)
+            notification = notification_ref.get()
+
+            if not notification.exists():
+                return Response({'error': 'Notification not found'}, status=404)
+
+            notification_data = notification.to_dict()
+            user_id_ref = notification_data.get('UserId') 
+            if not user_id_ref or user_id_ref.split('/')[-1] != uid: 
+                return Response({'error': 'Permission denied'}, status=403)
+            print("Type of notification_ref.update:", type(notification_ref.update))
+
+            update_data_noti = {'readed': False}
+            print("Type of notification_ref.update:", type(notification_ref.update))
+
+            notification_ref.update(update_data_noti)
+
+            return Response({"message": "Notification updated successfully"}, status=200)
+
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            return Response({'error': f'Error updating notification: {str(e)}'}, status=500)

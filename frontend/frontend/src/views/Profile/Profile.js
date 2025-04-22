@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
 
 const Profile = () => {
     const [profileData, setProfileData] = useState(null);
     const [userPosts, setUserPosts] = useState([]); 
-    const [recommendedUsers, setRecommendedUsers] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const navigate = useNavigate();
     const token = localStorage.getItem('firebaseToken');
 
     useEffect(() => {
@@ -28,27 +29,7 @@ const Profile = () => {
                 setLoading(false);
             });
 
-            // Obtener las publicaciones del usuario
-            axios.get('http://localhost:8000/api/profile/user-posts', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setUserPosts(response.data);
-            })
-            .catch(error => {
-                setError('Error getting posts');
-            });
 
-            // Obtener usuarios recomendados
-            axios.get('http://localhost:8000/api/profile/recommended-users', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setRecommendedUsers(response.data); 
-            })
-            .catch(error => {
-                console.error('Error getting recommended users', error);
-            });
         } else {
             setError('Something went wrong, please login again');
             setLoading(false);
@@ -66,9 +47,11 @@ const Profile = () => {
     };
 
     // Aquí va la logica para manejar el mensaje 
+   
     const handleSendMessage = (userId) => {
-        console.log(`Send message to user: ${userId}`); 
-    };
+    console.log(`Send message to user: ${userId}`);
+    navigate(`/chat/${userId}`); // Navigate to the chat page with the userId
+};
 
     // Renderizando el contenido
     if (loading) return <div className="loading-message">Loading...</div>;
@@ -107,18 +90,8 @@ const Profile = () => {
                 ))}
             </div>
 
-            {/* Usuarios recomendados */}
-            <div className="recommended-users">
-                <h2>Recommended Users</h2>
-                {recommendedUsers.length === 0 ? <p>No recommended users.</p> : recommendedUsers.map(user => (
-                    <div key={user.uid} className="recommended-user">
-                        <p>{user.name}</p>
-                        <button className="follow-button" onClick={() => handleFollow(user.uid)}>Follow</button>
-                        <button className="report-button" onClick={() => handleReport(user.uid)}>Report</button>
-                        <button className="message-button" onClick={() => handleSendMessage(user.uid)}>Send Message</button>
-                    </div>
-                ))}
-            </div>
+ 
+            
 
             {/* Notifications */}
             <div className="notifications-section">
@@ -126,6 +99,8 @@ const Profile = () => {
             </div>
         </div>
     );
+
+    
 };
 
 export default Profile;

@@ -29,8 +29,9 @@ function App() {
         <Route path="/RecuperarContrasenna" element={<RecuperarContrasenna />} />
         <Route path="/GestionContactos" element={<GestionContactos />} />
         <Route path="/Chat/:friendId" element={<Chat />} />
+        <Route path="/profile/:userId" element={<Profile />} />
 
-        <Route path='/profile' element={<Profile/>}/>
+
         <Route path="/account-management" element={<AccountManagement />} />
         <Route path="/notifications" element={<NotificationView/>}/>
         <Route path="/teacher" element={<Teacher />} />

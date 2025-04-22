@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import '../../styles/Notifications/notification.css'; // Adjust the path as needed
-import { FaBell } from 'react-icons/fa'; // Import a bell icon from react-icons
-import { getFirestore, doc, updateDoc } from 'firebase/firestore'; // Import Firestore functions
+import '../../styles/Notifications/notification.css'; 
+import { FaBell } from 'react-icons/fa'; 
 
 const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [dropdownOpen, setDropdownOpen] = useState(false); // State to toggle dropdown
+    const [dropdownOpen, setDropdownOpen] = useState(false); 
 
     const token = localStorage.getItem('firebaseToken');
-    const db = getFirestore(); // Initialize Firestore
 
     const formatDate = (date) => {
         if (!date) return 'No date';
@@ -49,29 +47,42 @@ const Notifications = () => {
     const unreadNotifications = notifications.filter(notification => !notification.readed);
 
     const handleNotificationClick = async (notificationId) => {
-        setNotifications(prevNotifications =>
-            prevNotifications.map(notification =>
-                notification.id === notificationId
-                    ? { ...notification, readed: true }
-                    : notification
-            )
-        );
+        console.log('Notification ID:', notificationId); 
+        console.log('Token:', token); 
 
-        try {
-            const notificationDoc = doc(db, 'notifications', notificationId); 
-            await updateDoc(notificationDoc, { readed: true }); 
-            console.log(`Notification ${notificationId} marked as read in Firestore.`);
-        } catch (error) {
-            console.error(`Error updating notification ${notificationId}:`, error);
+        if (!token) {
+            console.error('No token found in localStorage');
+            setError('No token found');
+            return;
         }
 
-        // codigo para redirigir a la vista de la notificacion aqui
-      
+        try {
+            setNotifications(prevNotifications =>
+                prevNotifications.map(notification =>
+                    notification.id === notificationId
+                        ? { ...notification, readed: true }
+                        : notification
+                )
+            );
+
+        
+            const response = await axios.put('http://localhost:8000/api/profile/notifications/', 
+                { notificationId }, 
+                { headers: { Authorization: `Bearer ${token}` } } 
+                
+            );
+
+            console.log(`Notification ${notificationId} marked as read successfully:`, response.data);
+        } catch (error) {
+            console.error(`Error updating notification ${notificationId}:`, error.response.data);
+
+
+
+        }
     };
 
     return (
         <div className="notifications-wrapper">
-            {}
             <div className="notifications-icon" onClick={toggleDropdown}>
                 <FaBell />
                 {unreadNotifications.length > 0 && (
@@ -79,7 +90,6 @@ const Notifications = () => {
                 )}
             </div>
 
-            {}
             {dropdownOpen && (
                 <div className="notifications-dropdown">
                     <h3>Notifications</h3>
