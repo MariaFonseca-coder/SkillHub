@@ -1,5 +1,5 @@
 # accounts/urls.py
-from django.urls import path
+from django.urls import path, include
 from .views import FirebaseLoginView, FirebaseSignupView, password_reset_request, PasswordResetRequestView, FriendListView, DeleteFriendshipView, GetUserInfoView, GetChatIdView, SendMessageView, FollowersListView, DeleteFollowerView
 
 urlpatterns = [
@@ -14,5 +14,6 @@ urlpatterns = [
     path('send-message/', SendMessageView.as_view(), name="send-message"),
     path('followers-list/', FollowersListView.as_view(), name='followers-list'),  
     path('delete-follower/', DeleteFollowerView.as_view(), name='delete-follower'),
+    path('api/', include('posts.urls')),
 
 ]
