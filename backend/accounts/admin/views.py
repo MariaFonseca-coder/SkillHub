@@ -254,7 +254,7 @@ class GetAllPostsView(APIView):
             posts = posts_ref.stream()
 
             posts_list = []
-            palabras_prohibidas = ["hola", "test", "puta", "idiota","hijueputa", "estupido","imbecil", "tarado","", "test","hola", "test","hola", "test","hola", "test","hola", "test","hola", "test"]
+            palabras_prohibidas = ["hola", "test", "puta", "idiota","hijueputa", "estupido","imbecil", "tarado", "test","hola", "test","hola", "test","hola", "test","hola", "test","hola", "test"]
             palabra_detectada = False
 
             for post in posts:
@@ -319,4 +319,4 @@ def check_posts_periodically():
         except Exception as e:
             print(f"🔥 Error consultando el endpoint: {e}")
 
-        time.sleep(300)  # se ajusta tiempo aqui
+        time.sleep(10000)  # se ajusta tiempo aqui

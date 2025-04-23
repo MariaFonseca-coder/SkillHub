@@ -46,25 +46,31 @@ const RecuperarContrasenna = () => {
   
 
   return (
-    <div className="auth-container">
-      <div className="form-wrapper">
-        <h2>Recover password</h2>
-        <form onSubmit={handlePasswordReset}>
+    <div className="recover-container">
+      <div className="recover-card">
+        <h2 className="recover-title">Recover Password</h2>
+        <form onSubmit={handlePasswordReset} className="recover-form">
           <input 
             type="email" 
-            placeholder="Email" 
+            placeholder="Enter your email" 
             value={email}
             onChange={e => setEmail(e.target.value)}
             required 
+            className="recover-input"
           />
-          <button type="submit" className="login-btn">Send email to recover your password</button>
+          <button type="submit" className="recover-button">
+            Send Recovery Email
+          </button>
         </form>
-        {mensaje && <p>{mensaje}</p>}
-        <p> <a href="/">Back to Login</a></p>
-        <p><a href="/politicas">See politics</a></p>
+        {mensaje && <p className="recover-message">{mensaje}</p>}
+        <div className="recover-links">
+          <a href="/">← Back to Login</a>
+          <a href="/politicas">See Policies</a>
+        </div>
       </div>
     </div>
   );
+  
 };
 
 export default RecuperarContrasenna;

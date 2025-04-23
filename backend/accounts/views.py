@@ -144,7 +144,7 @@ def password_reset_request(request):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from firebase_admin import firestore  # Asegúrate de que firebase_admin esté inicializado
+from firebase_admin import firestore  
 from django.contrib.auth.models import User
 
 class PasswordResetRequestView(APIView):
@@ -160,15 +160,9 @@ class PasswordResetRequestView(APIView):
         if not email:
             return Response({"error": "No se proporcionó un correo"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Verifica si el usuario exi ste en Django (opcional si solo usás Firebase)
-        #. user_exists = User.objects.filter(email=email).exists()
 
-        # if not user_exists:
-          #  return Response({"error": "Este correo no está registrado"}, status=status.HTTP_404_NOT_FOUND)
-
-        # 2. Busca en Firestore el usuario con ese email y obtiene su rol
         db = firestore.client()
-        users_ref = db.collection("users")  # Asegurate de que la colección se llame así
+        users_ref = db.collection("users")
         query = users_ref.where("email", "==", email).limit(1).stream()
 
         user_data = None
