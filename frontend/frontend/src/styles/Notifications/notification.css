@@ -1,0 +1,104 @@
+.notifications-container {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #fff;
+}
+
+.notifications-container h1 {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.notification-item {
+    background-color: #f5f5f5;
+    border-left: 4px solid #3f51b5;
+    border-radius: 5px;
+    padding: 0.8rem; 
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease;
+    border-bottom: 1px solid #eee;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background-color: #eaeaea;
+}
+
+.notification-item p {
+    margin: 0.5rem 0;
+    color: #444;
+    font-size: 1rem; 
+}
+
+.notification-item p strong {
+    color: #111;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 1.1rem; 
+    padding: 1rem;
+    color: #888;
+}
+
+.error-message {
+    text-align: center;
+    font-size: 1rem; 
+    padding: 1rem;
+    color: red;
+}
+
+.notifications-wrapper {
+    position: fixed; 
+    top: 5%; 
+    right: 5%;
+    z-index: 1000; 
+}
+
+.notifications-icon {
+    font-size: 4rem; 
+    cursor: pointer;
+    color: #333;
+    position: relative;
+}
+
+.notifications-icon .notification-count {
+    position: absolute;
+    top: -10%; 
+    right: -10%;
+    background-color: red;
+    color: white;
+    font-size: 2rem; 
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 0.2rem 0.4rem;
+}
+
+.notifications-dropdown {
+    position: absolute;
+    top: 5rem;
+    right: 0;
+    width: 25rem;
+    max-height: 25rem; 
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.notifications-dropdown h3 {
+    margin: 0 0 1rem;
+    font-size: 2rem; 
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5rem;
+}
+

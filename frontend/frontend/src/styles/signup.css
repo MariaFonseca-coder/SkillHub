@@ -1,245 +1,200 @@
-/* signup.css */
+/* src/styles/signup.css */
 
-/* Reset básico */
-* {
-    margin: 0;
+/* ===== Bloque: signup ===== */
+
+/* Contenedor centrado */
+.signup__auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  padding: 1rem;
+}
+
+/* Tarjeta principal */
+.signup__form-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Círculos decorativos */
+.signup__form-wrapper::before,
+.signup__form-wrapper::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.2;
+}
+.signup__form-wrapper::before {
+  width: 200px;
+  height: 200px;
+  background: #0E57A6;
+  top: -60px;
+  left: -60px;
+}
+.signup__form-wrapper::after {
+  width: 180px;
+  height: 180px;
+  background: #59BD7F;
+  bottom: -50px;
+  right: -50px;
+}
+
+/* Centrado de hijos */
+.signup__form-wrapper > * {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Título */
+.signup__title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #0E57A6;
+  font-size: 1.75rem;
+}
+
+/* Inputs y select */
+.signup__form input,
+.signup__form select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+.signup__form input:focus,
+.signup__form select:focus {
+  outline: none;
+  border-color: #0E57A6;
+}
+
+/* Mensajes de error */
+.signup__error-message {
+  color: #B92B41;
+  font-size: 0.875rem;
+  margin: 0.25rem 0 1rem;
+  text-align: left;
+}
+
+/* Campo de ubicación */
+.signup__location-field {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.signup__location-field input {
+  flex: 1;
+}
+.signup__location-field button {
+  background-color: #0E57A6;          /* Azul normal */
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.signup__location-field button:hover {
+  background-color: #4B80D3;          /* Azul claro en hover */
+  transform: scale(1.02);
+}
+
+/* Botón principal */
+.signup__btn--primary {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #0E57A6;          /* Azul normal */
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 0.5rem;
+}
+.signup__btn--primary:hover {
+  background-color: #4B80D3;          /* Azul claro en hover */
+  transform: scale(1.02);
+}
+
+/* Selección de rol */
+.signup__user-type {
+  text-align: center;
+  margin: 1rem 0;
+}
+.signup__user-type label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+.signup__user-type select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+.signup__user-type select:focus {
+  outline: none;
+  border-color: #0E57A6;
+}
+
+/* Textos inferiores — centrados */
+.signup__bottom-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #555;
+}
+.signup__bottom-text a {
+  color: #0E57A6;
+  text-decoration: none;
+}
+.signup__bottom-text a:hover {
+  text-decoration: underline;
+}
+
+/* Desktop: full-width pero centrado */
+@media (min-width: 768px) {
+  .signup__auth-container {
     padding: 0;
-    box-sizing: border-box;
+    align-items: flex-start;
   }
-  
-  /* Configuración del body e html */
-  html, body {
+  .signup__form-wrapper {
+    max-width: none;
     width: 100%;
-    height: 100%;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f7f7f7;
-  }
-  
-  /* Contenedor principal con fondo decorativo */
-  .auth-background {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background-color: #f7f7f7;
-  }
-  
-  /* Círculos decorativos */
-  .circle {
-    position: absolute;
-    border-radius: 50%;
-    background-color: #4285F4;
-    opacity: 0.15;
-    z-index: 1;
-  }
-  
-  .circle1 {
-    width: 250px;
-    height: 250px;
-    top: -100px;
-    left: -100px;
-  }
-  
-  .circle2 {
-    width: 300px;
-    height: 300px;
-    bottom: -150px;
-    right: -150px;
-  }
-  
-  /* Contenedor del formulario */
-  .auth-container {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 450px;
+    border-radius: 0;
+    box-shadow: none;
     padding: 2rem;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 0 1rem;
   }
-  
-  /* Título del formulario */
-  .form-title {
-    font-size: 1.8rem;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: #333;
+}
+
+/* Ajustes para móviles muy pequeños */
+@media (max-width: 480px) {
+  .signup__form-wrapper {
+    padding: 2rem 1.5rem;
   }
-  
-  /* Mensaje de error */
-  .error-message {
-    background-color: #fdecea;
-    border: 1px solid #f5c2c0;
-    color: #a94442;
-    padding: 0.75rem;
-    border-radius: 5px;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    text-align: left;
+  .signup__title {
+    font-size: 1.5rem;
   }
-  
-  /* Estilos generales del formulario */
-  .auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .input-wrapper {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-  }
-  
-  .input-wrapper label {
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
-    color: #555;
-  }
-  
-  .input-wrapper input,
-  .input-wrapper select {
-    padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border 0.2s ease;
-  }
-  
-  .input-wrapper input:focus,
-  .input-wrapper select:focus {
-    border-color: #4285F4;
-    outline: none;
-  }
-  
-  /* Campo de ubicación con botón */
-  .location-field {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  
-  .location-field input {
-    flex: 1;
-  }
-  
-  .location-btn {
-    padding: 0.65rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background-color: #fff;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .location-btn:hover {
-    background-color: #f0f0f0;
-  }
-  
-  /* Botón principal de registro */
-  .login-btn {
-    padding: 0.85rem;
-    background-color: #4285F4;
-    border: none;
-    color: #fff;
-    font-size: 1rem;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .login-btn:hover {
-    background-color: #357ae8;
-  }
-  
-  /* Separador para opciones alternativas */
-  .separator {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #777;
-    margin: 1rem 0;
-    position: relative;
-  }
-  
-  .separator::before,
-  .separator::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: 30%;
-    height: 1px;
-    background-color: #ddd;
-  }
-  
-  .separator::before {
-    left: 0;
-  }
-  
-  .separator::after {
-    right: 0;
-  }
-  
-  /* Botón para iniciar sesión con Google */
-  .google-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.85rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background-color: #fff;
-    color: #555;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .google-btn:hover {
-    background-color: #f7f7f7;
-  }
-  
-  .google-btn img {
-    width: 20px;
-    height: 20px;
-  }
-  
-  /* Enlace de redirección */
-  .redirect {
-    text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .redirect a {
-    color: #4285F4;
-    text-decoration: none;
-    font-weight: 500;
-  }
-  
-  .redirect a:hover {
-    text-decoration: underline;
-  }
-  
-  /* Ajustes responsivos */
-  @media (max-width: 480px) {
-    .auth-container {
-      margin: 1rem;
-      padding: 1.5rem;
-    }
-    .form-title {
-      font-size: 1.6rem;
-    }
-    .login-btn,
-    .google-btn {
-      font-size: 0.95rem;
-    }
-  }
-  
+}
