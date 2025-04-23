@@ -4,9 +4,9 @@ from .views import ProfileView, UserPostsView, AccountManagementView, PublicProf
 
 urlpatterns = [
     path('', ProfileView.as_view(), name='profile'),
-    path('<str:uid>/', PublicProfileView.as_view(), name='public-profile'), 
     path('user-posts/', UserPostsView.as_view(), name='user-posts'),
     #path('recommended-users/', RecommendedUsersView.as_view(), name='recommended-users'),
-    path('account-managment/', AccountManagementView.as_view(), name='account-managment'),
+    path('account-management/', AccountManagementView.as_view(), name='account-management'),
     #path('notifications/', NotificationsView.as_view(), name='notifications')
+    path('<str:uid>/', PublicProfileView.as_view(), name='public-profile'), 
 ]
