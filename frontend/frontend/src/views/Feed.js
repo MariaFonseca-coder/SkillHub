@@ -188,7 +188,7 @@ const Posts = ({ currentUser, searchTerm }) => {
   const [shareModal, setShareModal] = useState(false);
   const [viewMode, setViewMode] = useState("list");
   const [expandedPost, setExpandedPost] = useState(null);
-  const [newPost, setNewPost] = useState({ content: "", category: "📄 Post", privacy: "public", file: null });
+  const [newPost, setNewPost] = useState({ content: "", mediaUrl: "", category: "📄 Post", privacy: "public" });
   const [shareText, setShareText] = useState("");
   const [postIdToShare, setPostIdToShare] = useState(null);
   const [reportModalPostId, setReportModalPostId] = useState(null);
@@ -202,6 +202,33 @@ const Posts = ({ currentUser, searchTerm }) => {
   const [reportSuccess, setReportSuccess] = useState("");
   const [editingPostId, setEditingPostId] = useState(null);
   const [postComments, setPostComments] = useState([]);
+  const [mediaValid, setMediaValid] = useState(true);
+  
+
+  useEffect(() => {
+    if (newPost.mediaUrl && isImageUrl(newPost.mediaUrl)) {
+      const img = new Image();
+      img.onload = () => setMediaValid(true);
+      img.onerror = () => setMediaValid(false);
+      img.src = newPost.mediaUrl;
+    } else {
+      setMediaValid(true); // en caso de que no sea imagen
+    }
+  }, [newPost.mediaUrl]);
+  
+  const validateImageUrl = (url) => {
+    const img = new Image();
+    img.onload = () => setMediaValid(true);
+    img.onerror = () => setMediaValid(false);
+    img.src = url;
+  };
+  
+  useEffect(() => {
+    if (newPost.mediaUrl && isImageUrl(newPost.mediaUrl)) {
+      validateImageUrl(newPost.mediaUrl);
+    }
+  }, [newPost.mediaUrl]);
+  
 
   useEffect(() => {
     if (!expandedPost) return;
@@ -245,61 +272,102 @@ const Posts = ({ currentUser, searchTerm }) => {
       }
     }, [location]);
 
-  const handleAddPost = async () => {
-    if (!newPost.content.trim() || !currentUser) {
-      alert("Debés escribir algo y estar logueado para publicar.");
-      return;
-    }
-  
-    let mediaUrl = null;
-
-    if (newPost.file) {
-      const formData = new FormData();
-      formData.append("file", newPost.file);
+    const isImageUrl = (url) => {
+      return /^https?:\/\/.+\.(jpg|jpeg|png|gif|bmp|webp)(\?.*)?$/i.test(url);
+    };
     
-      try {
-        const response = await fetch("http://localhost:8000/api/upload/", {
-          method: "POST",
-          body: formData,
-        });
+    const isVideoUrl = (url) => {
+      return /^https?:\/\/.+\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
+    };
     
-        const data = await response.json();
-        if (data.url) {
-          mediaUrl = data.url;
-        } else {
-          alert("Error al subir el archivo");
-          return;
-        }
-      } catch (error) {
-        console.error("Error al subir desde backend:", error);
-        alert("Hubo un problema subiendo el archivo");
+    const isYouTubeUrl = (url) => {
+      return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+    };
+    
+    const extractYouTubeId = (url) => {
+      const regExp = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([\w-]{11})/;
+      const match = url.match(regExp);
+      return match ? match[1] : null;
+    };
+    
+    const handleAddPost = async () => {
+      if (!newPost.content.trim() || !currentUser) {
+        alert("Debés escribir algo y estar logueado para publicar.");
         return;
       }
-    }    
-  
-    try {
-      await addDoc(collection(db, "posts"), {
-        content: newPost.content,
-        category: newPost.category,
-        authorId: currentUser.uid,
-        author: currentUser.displayName || currentUser.email,
-        createdAt: serverTimestamp(),
-        likes: [],
-        comments: [],
-        privacy: newPost.privacy,
-        reports: [],
-        sharedBy: [],
-        mediaUrl: mediaUrl || null,
-        status: "enabled",
-      });
-  
-      setNewPost({ content: "", category: "📄 Post", privacy: "public", file: null });
-      setShowModal(false);
-    } catch (error) {
-      console.error("Error al guardar el post:", error);
-      alert("No se pudo guardar el post. Intentalo de nuevo.");
-    }
-  };  
+    
+      let mediaUrl = null;
+    
+      if (newPost.file) {
+        const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "video/mp4", "video/webm", "video/ogg"];
+        if (!validTypes.includes(newPost.file.type)) {
+          alert("Formato de archivo no permitido. Solo se permiten imágenes y videos MP4/WebM/Ogg.");
+          return;
+        }
+    
+        const formData = new FormData();
+        formData.append("file", newPost.file);
+    
+        try {
+          const response = await fetch("http://localhost:8000/api/upload/", {
+            method: "POST",
+            body: formData,
+          });
+    
+          const data = await response.json();
+          if (data.url) {
+            mediaUrl = data.url;
+            const ext = mediaUrl.split(".").pop().toLowerCase();
+            const validExtensions = ["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "ogg"];
+            if (!validExtensions.includes(ext)) {
+              alert("El archivo se subió pero no tiene una extensión válida para mostrarse.");
+              return;
+            }
+          } else {
+            alert("Error al subir el archivo");
+            return;
+          }
+        } catch (error) {
+          console.error("Error al subir desde backend:", error);
+          alert("Hubo un problema subiendo el archivo");
+          return;
+        }
+      }
+    
+      const finalMediaUrl = mediaUrl || newPost.mediaUrl || null;
+    
+      if (
+        finalMediaUrl &&
+        !isImageUrl(finalMediaUrl) &&
+        !isVideoUrl(finalMediaUrl) &&
+        !isYouTubeUrl(finalMediaUrl)
+      ) {
+        alert("El archivo subido no es una imagen, video válido ni un enlace de YouTube.");
+        return;
+      }
+    
+      try {
+        await addDoc(collection(db, "posts"), {
+          content: newPost.content,
+          mediaUrl: finalMediaUrl,
+          category: newPost.category,
+          privacy: newPost.privacy,
+          authorId: currentUser.uid,
+          author: currentUser.displayName || currentUser.email,
+          createdAt: serverTimestamp(),
+          likes: [],
+          comments: [],
+          reports: [],
+          status: "enabled"
+        });
+    
+        setNewPost({ content: "", category: "📄 Post", privacy: "public", file: null, mediaUrl: "" });
+        setShowModal(false);
+      } catch (error) {
+        console.error("Error al guardar el post:", error);
+        alert("No se pudo guardar el post. Intentalo de nuevo.");
+      }
+    }; 
   
   const handleLike = async (postId) => {
     const postRef = db.collection("posts").doc(postId);
@@ -626,41 +694,31 @@ const handleConfirmShare = async () => {
                   <p className="text-muted"><small>Compartido por: {post.sharedBy.join(", ")}</small></p>
                 )}
                 <p>{post.content}</p>
+
                 {post.mediaUrl && (
-                  <>
-                    {post.mediaUrl.includes("video") ? (
-                      <video
-                      controls
-                      className="img-fluid rounded w-100"
-                      style={{ maxHeight: "400px" }}
-                    >
-                      <source src={post.mediaUrl} type="video/mp4" />
-                      Tu navegador no soporta el video.
-                    </video>                    
-                    ) : (
-                      <img
-                        src={post.mediaUrl}
-                        alt="Post"
-                        className="img-fluid rounded w-100"
-                        style={{ objectFit: "cover", maxHeight: "400px" }}
-                      />
-                    )}
-                  </>
-                )}
+                isYouTubeUrl(post.mediaUrl) ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${extractYouTubeId(post.mediaUrl)}`}
+                    width="100%"
+                    height="315"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="YouTube video"
+                    className="rounded mb-2"
+                  ></iframe>
+                ) : isVideoUrl(post.mediaUrl) ? (
+                  <video controls className="w-100 mt-2 rounded">
+                    <source src={post.mediaUrl} type="video/mp4" />
+                    Tu navegador no soporta el video.
+                  </video>
+                ) : isImageUrl(post.mediaUrl) ? (
+                  <img src={post.mediaUrl} alt="media" className="img-fluid mt-2 rounded" />
+                ) : (
+                  <p className="text-muted small">No se puede mostrar el archivo. Verificá que el enlace sea válido.</p>
+                )
+              )}
 
-                {post.mediaUrl && post.category === "📸 Imagen" && (
-                    <img src={post.mediaUrl} alt="Post" className="img-fluid mt-2 rounded" />
-                  )}
-
-                  {post.mediaUrl && post.category === "🎥 Video" && (
-                    <video controls className="img-fluid mt-2 rounded">
-                      <source src={post.mediaUrl} type="video/mp4" />
-                      Tu navegador no soporta el video.
-                    </video>
-                  )}
-                {post.additionalText && (
-                  <p className="text-muted"><small>: {post.additionalText}</small></p>
-                )}
               </div>
   
               {expandedPost === post.id && (
@@ -768,33 +826,36 @@ const handleConfirmShare = async () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Archivo (Imagen o Video):</label>
+                <label className="form-label">URL del archivo (imagen o video)</label>
                 <input
-                  type="file"
+                  type="text"
                   className="form-control"
-                  accept="image/*,video/*"
-                  onChange={(e) => setNewPost({ ...newPost, file: e.target.files[0] })}
+                  value={newPost.mediaUrl || ""}
+                  onChange={(e) => setNewPost({ ...newPost, mediaUrl: e.target.value })}
+                  placeholder="https://..."
                 />
               </div>
 
-              {/* Vista previa */}
-              {newPost.file && (
+              {newPost.mediaUrl && (
                 <div className="mb-3">
                   <label className="form-label">Vista previa:</label>
-                  {newPost.file.type.startsWith("image/") ? (
-                    <img
-                      src={URL.createObjectURL(newPost.file)}
-                      alt="Vista previa"
-                      className="img-fluid rounded"
-                      style={{ maxHeight: "200px" }}
-                    />
-                  ) : newPost.file.type.startsWith("video/") ? (
-                    <video controls className="img-fluid rounded" style={{ maxHeight: "200px" }}>
-                      <source src={URL.createObjectURL(newPost.file)} type={newPost.file.type} />
-                      Tu navegador no soporta la vista previa de video.
+                  {isVideoUrl(newPost.mediaUrl) ? (
+                    <video controls className="w-100">
+                      <source src={newPost.mediaUrl} />
                     </video>
+                  ) : isImageUrl(newPost.mediaUrl) ? (
+                    mediaValid ? (
+                      <img
+                        src={newPost.mediaUrl}
+                        alt="vista previa"
+                        className="img-fluid rounded"
+                        style={{ maxHeight: "200px" }}
+                      />
+                    ) : (
+                      <p className="text-danger small">No se puede cargar la imagen. Verificá el enlace.</p>
+                    )
                   ) : (
-                    <p className="text-danger">Archivo no compatible.</p>
+                    <p className="text-muted small">El enlace no es una imagen ni un video válido.</p>
                   )}
                 </div>
               )}
@@ -817,7 +878,7 @@ const handleConfirmShare = async () => {
               <button
                 className="btn btn-primary"
                 onClick={editingPostId ? confirmEditPost : handleAddPost}
-                disabled={uploading}
+                disabled={uploading || !mediaValid}
               >
                 {editingPostId ? "Guardar cambios" : "Publicar"}
               </button>
