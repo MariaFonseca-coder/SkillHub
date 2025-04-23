@@ -25,7 +25,7 @@ const Notifications = () => {
             return;
         }
 
-        axios.get('http://localhost:8000/api/profile/notifications', {
+        axios.get('http://localhost:8000/api/notifications', {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
@@ -66,7 +66,7 @@ const Notifications = () => {
             );
 
         
-            const response = await axios.put('http://localhost:8000/api/profile/notifications/', 
+            const response = await axios.put('http://localhost:8000/api/notifications/', 
                 { notificationId }, 
                 { headers: { Authorization: `Bearer ${token}` } } 
                 

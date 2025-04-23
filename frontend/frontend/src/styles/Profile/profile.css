@@ -53,7 +53,7 @@
 }
 
 /* Estilos para los botones */
-.profile-container button {
+.profile-container .manage-account-button {
     background-color: #2980b9; 
     color: white;
     padding: 8px 12px;
@@ -66,7 +66,7 @@
 }
 
 /* Hover en botones */
-.profile-container button:hover {
+.profile-container .manage-account-button:hover {
     background-color: #1f5a7c; 
 }
 
@@ -229,4 +229,90 @@
     object-fit: cover;
     border-radius: 50%;
     margin-bottom: 10px;
+}
+
+.actions-profile{    
+    margin-top: 30px;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-Add-friend {
+    background-color: #2980b9; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+  }
+  
+.btn-profile-report {
+    background-color: #880808; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+  }
+  
+.btn-message-profile {
+    background-color: #27ae60; 
+    color: white;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 8px;
+
+  }
+
+  .btn-Add-friend:hover {
+    background-color: #3498db;
+}
+
+.btn-profile-report:hover {
+    background-color: #a93226;
+}
+
+.btn-message-profile:hover {
+    background-color: #2ecc71;
+}
+
+.go-back-button {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px; /* opcional, para dar aire debajo */
+}
+
+.btn-go-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    border: 2px solid #2c3e50;
+    padding: 10px;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 1.8rem;
+    transition: all 0.3s ease;
+}
+
+.btn-go-back:hover {
+    background-color: #2c3e50;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(44, 62, 80, 0.2);
 }

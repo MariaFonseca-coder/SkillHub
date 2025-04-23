@@ -30,6 +30,7 @@ function App() {
         <Route path="/GestionContactos" element={<GestionContactos />} />
         <Route path="/Chat/:friendId" element={<Chat />} />
         <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/profile/" element={<Profile/>}></Route>
 
 
         <Route path="/account-management" element={<AccountManagement />} />

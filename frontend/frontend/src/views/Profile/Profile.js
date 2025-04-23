@@ -1,106 +1,122 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
+import { FaHome } from "react-icons/fa";
 
 const Profile = () => {
+    const { userId: paramUserId } = useParams(); // <-- id de la URL
     const [profileData, setProfileData] = useState(null);
-    const [userPosts, setUserPosts] = useState([]); 
+    const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const token = localStorage.getItem('firebaseToken');
 
     useEffect(() => {
-        if (token) {
-            // Obtener los datos del perfil del usuario
-            axios.get('http://localhost:8000/api/profile', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setProfileData(response.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                setError('Error getting profile');
-                setLoading(false);
-            });
-
-
-        } else {
-            setError('Something went wrong, please login again');
+        if (!token) {
+            setError('Token not found. Please log in.');
             setLoading(false);
+            return;
         }
+
+        // Obtener el perfil del usuario autenticado
+        axios.get('http://localhost:8000/api/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => {
+            setCurrentUserId(res.data.id); // Guardamos el ID actual
+        })
+        .catch(() => {
+            setError('Error getting current user');
+            setLoading(false);
+        });
+
     }, [token]);
 
-    // Aquí va la logica para manejar el follow
-    const handleFollow = (userId) => {
-        console.log(`Follow user: ${userId}`); 
-    };
+    useEffect(() => {
+    if (!token || currentUserId === null) return;
 
-    // Aquí va la logica para manejar el reporte
-    const handleReport = (userId) => {
-        console.log(`Report user: ${userId}`); 
-    };
+    const url = paramUserId
+        ? `http://localhost:8000/api/profile/${paramUserId}`
+        : 'http://localhost:8000/api/profile';
 
-    // Aquí va la logica para manejar el mensaje 
-   
-    const handleSendMessage = (userId) => {
-    console.log(`Send message to user: ${userId}`);
-    navigate(`/chat/${userId}`); // Navigate to the chat page with the userId
-};
+    axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(response => {
+        const profile = response.data;
 
-    // Renderizando el contenido
-    if (loading) return <div className="loading-message">Loading...</div>;
-    if (error) return <div className="error-message">Error loading profile, Please Login again.</div>;
+        const isOwn = !paramUserId || profile.id === currentUserId;
+
+       /* if (profile.privacidad === 'private' && !isOwn) {
+            console.log('perfil privado')            
+        } else {
+            setProfileData(profile);
+        }
+        */
+
+        console.log(profile)        
+        setProfileData(profile);
+        setLoading(false);
+    })
+    .catch(() => {
+        setError('Error al obtener los datos del perfil.');
+        setLoading(false);
+    });
+
+}, [token, paramUserId, currentUserId]);
+
+
+    const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
+    
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>{error}</div>;
 
     return (
         <div className="profile-container">
-            <h1>{profileData.name}'s Profile</h1>
+            <div className='go-back-button'>
+                <a href="#" className="btn-go-back"><FaHome /></a>
+            </div>
+            <h1>{profileData.name}</h1>
 
-            {/* Mostrar foto de perfil si está disponible */}
             {profileData.fotoPerfil && (
-                <img 
-                    src={profileData.fotoPerfil} 
-                    alt="Profile" 
-                    className="profile-picture"
-                />
+                <img src={profileData.fotoPerfil} alt="Profile" className="profile-picture" />
             )}
 
-            {/* Mostrar datos del perfil */}
             <p>Email: {profileData.email}</p>
             <p>Biography: {profileData.biografia}</p>
             <p>Name: {profileData.name}</p>
 
-            {/* Botón para redirigir a la sección de Account Management */}
-            <Link to="/account-management">
-                <button className="manage-account-button">Account Management</button>
-            </Link>
+            {!isOwnProfile && (
+               <div className='actions-profile'>
+               <button className='btn-Add-friend'>Add friend</button>
+               <button className='btn-profile-report'>Report</button>
+               <button className='btn-message-profile'>Message</button>
+               </div>
+            )}
 
-            {/* Publicaciones del usuario */}
-            <div className="user-posts">
-                <h2>My Posts</h2>
-                {userPosts.length === 0 ? <p>No posts available.</p> : userPosts.map(post => (
-                    <div key={post.id} className="post-item">
-                        <p>{post.content}</p>
-                    </div>
-                ))}
-            </div>
+            {isOwnProfile && (
+                <Link to="/account-management">
+                    <button className="manage-account-button">Account Management</button>
+                </Link>
+            )}
 
- 
-            
 
-            {/* Notifications */}
+            {profileData.privacidad === 'private' && (
+                <h1>Este perfil es privado, para ver mas contenido deberas ser amigo!</h1>
+            )}
+
+
             <div className="notifications-section">
-                <Notifications /> {}
+                <Notifications />
             </div>
         </div>
     );
-
-    
 };
 
 export default Profile;

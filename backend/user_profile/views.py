@@ -7,6 +7,8 @@ from firebase_admin import auth as firebase_auth
 from .permissions import FirebaseAuthentication  #
 from datetime import datetime
 from rest_framework.permissions import AllowAny
+
+
 class ProfileView(APIView):
     """
     Vista para obtener el perfil de usuario desde Firestore.
@@ -53,6 +55,39 @@ class ProfileView(APIView):
             return Response({'error': 'Invalid token'}, status=401)
         except Exception as e:
             return Response({'error': f'Error fetching user profile: {str(e)}'}, status=400)
+
+class PublicProfileView(APIView):
+    permission_classes = [AllowAny]  # o usa FirebaseAuthentication si quieres protección
+
+    def get(self, request, uid):
+        try:
+            db = firestore.client()
+            user_doc_ref = db.collection('users').document(uid)
+            user_doc = user_doc_ref.get()
+
+            if not user_doc.exists:
+                return Response({'error': 'User not found'}, status=404)
+
+            user_data = user_doc.to_dict()
+
+            # Puedes limitar qué información pública devuelves
+            public_profile = {
+                'id': uid,  # <- Agrega el UID
+                'name': user_data.get('name'),
+                'email': user_data.get('email'),
+                'biografia': user_data.get('biografia', ''),
+                'fotoPerfil': user_data.get('fotoPerfil', None),
+                'privacidad': user_data.get('privacidad', 'public'),
+            }
+
+            # Verifica si el perfil en este caso es privado para ver que devuelve
+            #if public_profile['privacidad'] == 'private':
+               # return Response({'error': 'This profile is private'}, status=403)
+
+            return Response(public_profile, status=200)
+
+        except Exception as e:
+            return Response({'error': f'Error fetching public profile: {str(e)}'}, status=400)
 
 
 class AccountManagementView(APIView):
@@ -148,132 +183,5 @@ class UserPostsView(APIView):
             return Response({'error': f'Error fetching user posts: {str(e)}'}, status=400)
 
 
-class RecommendedUsersView(APIView):
-    """
-    Vista para obtener usuarios recomendados para seguir.
-    """
-    permission_classes = [FirebaseAuthentication]  # Usamos el permiso personalizado
-
-    def get(self, request):
-        token = request.headers.get('Authorization')
-
-        if not token:
-            return Response({'error': 'Authorization header is missing'}, status=400)
-
-        try:
-            # Extraer el token del formato "Bearer <token>"
-            token = token.split(' ')[1]
-            decoded_token = firebase_auth.verify_id_token(token)
-            uid = decoded_token.get('uid')
-
-            # Aquí se puede implementar alguna lógica para recomendar usuarios basados en intereses, hashtags, etc.
-            db = firestore.client()
-            recommended_users_ref = db.collection('users').limit(4)  # Obtén algunos usuarios para recomendar
-            recommended_users = []
-
-            for doc in recommended_users_ref.stream():
-                user_data = doc.to_dict()  # Obtenemos los datos del usuario
-                user_data['uid'] = doc.id  # Agregamos el UID de Firebase (el ID del documento en Firestore)
-                recommended_users.append(user_data)
-                print(f"User data: {user_data}")  # Agregar log para depurar
-
-            return Response(recommended_users, status=200)
-
-        except IndexError:
-            return Response({'error': 'Token format is incorrect'}, status=400)
-        except firebase_auth.ExpiredIdTokenError:
-            return Response({'error': 'Token has expired'}, status=401)
-        except firebase_auth.InvalidIdTokenError:
-            return Response({'error': 'Invalid token'}, status=401)
-        except Exception as e:
-            return Response({'error': f'Error fetching recommended users: {str(e)}'}, status=400)
 
 
-
-class NotificationsView(APIView):
-    """
-    View to handle notifications for the user.
-    """
-    permission_classes = [AllowAny]  #
-
-    def get(self, request):
-        token = request.headers.get('Authorization')
-
-        if not token:
-            return Response({'error': 'Authorization header is missing'}, status=400)
-
-        try:
-            token = token.split(' ')[1]
-            decoded_token = firebase_auth.verify_id_token(token)
-            uid = decoded_token.get('uid')
-
-            db = firestore.client()
-            user_doc_ref = db.collection('users').document(uid)
-
-            notifications_ref = db.collection('notifications').where('UserId', '==', user_doc_ref)
-            notifications = []
-
-            for doc in notifications_ref.stream():
-                try:
-                    notification = doc.to_dict()
-                    notification['id'] = doc.id
-
-                    # Convert 'notificationDate' to ISO 8601 string if it's a Timestamp
-                    if 'notificationDate' in notification:
-                        notification['notificationDate'] = str(notification['notificationDate'])
-
-                    # Convert 'UserId' to string if it's a DocumentReference
-                    if 'UserId' in notification and isinstance(notification['UserId'], firestore.DocumentReference):
-                        notification['UserId'] = notification['UserId'].path
-
-                    notifications.append(notification)
-                except Exception as e:
-                    print(f"Error processing document {doc.id}: {str(e)}")
-
-            return Response(notifications, status=200)
-
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-            return Response({'error': f'Error fetching notifications: {str(e)}'}, status=500)
-
-    def put(self, request):
-        """
-        Update a specific notification (e.g., mark it as read).
-        """
-        token = request.headers.get('Authorization')
-
-        if not token:
-            return Response({'error': 'Authorization header is missing'}, status=400)
-
-        try:
-            token = token.split(' ')[1]
-            decoded_token = firebase_auth.verify_id_token(token)
-            uid = decoded_token.get('uid')
-
-            notification_id = request.data.get('notificationId')
-            if not notification_id:
-                return Response({'error': 'Notification ID is required'}, status=400)
-
-            db = firestore.client()
-            notification_ref = db.collection('notifications').document(notification_id)
-            notification = notification_ref.get()
-
-            if not notification.exists():
-                return Response({'error': 'Notification not found'}, status=404)
-
-            notification_data = notification.to_dict()
-            user_id_ref = notification_data.get('UserId') 
-            if not user_id_ref or user_id_ref.split('/')[-1] != uid: 
-                return Response({'error': 'Permission denied'}, status=403)
-            print("Type of notification_ref.update:", type(notification_ref.update))
-
-            update_data_noti = {'readed': False}
-            print("Type of notification_ref.update:", type(notification_ref.update))
-
-            notification_ref.update(update_data_noti)
-
-            return Response({"message": "Notification updated successfully"}, status=200)
-
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-            return Response({'error': f'Error updating notification: {str(e)}'}, status=500)
