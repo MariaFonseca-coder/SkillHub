@@ -507,82 +507,87 @@ const Posts = ({ currentUser, searchTerm }) => {
   };
 
   const handleShare = (postId) => {
+    console.log("Post a compartir:", postId);
     setPostIdToShare(postId); // Establecer el postId del post que se va a compartir
     setShareModal(true); // Mostrar el modal de compartir
     setShareText(""); // Limpiar el texto adicional
   };
 
-const handleConfirmShare = async () => {
-  try {
-    const postRef = db.collection("posts").doc(postIdToShare);
-    const postSnapshot = await postRef.get();
-    const postData = postSnapshot.data();
-
-    if (!postData) {
-      console.error("Post no encontrado.");
-      return;
-    }
-
-    // Crear un nuevo post como compartido con data anidada
-    await db.collection("posts").add({
-      content: shareText || "", // solo el comentario del que comparte
-      category: "📄 Post",
-      authorId: currentUser.uid,
-      author: currentUser.displayName || currentUser.email,
-      createdAt: serverTimestamp(),
-      likes: [],
-      comments: [],
-      privacy: postData.privacy,
-      reports: [],
-      sharedFrom: postIdToShare,
-      originalPost: {
-        content: postData.content,
-        author: postData.author,
-        mediaUrl: postData.mediaUrl || null,
-        category: postData.category,
-        additionalText: postData.additionalText || "",
-        createdAt: postData.createdAt,
+  const handleConfirmShare = async () => {
+    try {
+      const postRef = doc(db, "posts", postIdToShare);
+      const postSnapshot = await getDoc(postRef);
+  
+      if (!postSnapshot.exists()) {
+        console.error("Post no encontrado.");
+        alert("No se encontró la publicación original.");
+        return;
       }
-    });
-
-    // Crear notificación al autor original
-    if (postData.authorId !== currentUser.uid) {
-      const userRef = doc(db, "users", postData.authorId);
-      const existing = await getDocs(
-        query(
-          collection(db, "notifications"),
-          where("UserId", "==", userRef),
-          where("type", "==", "share"),
-          where("readed", "==", false),
-          where("postId", "==", postIdToShare)
-        )
-      );
-
-      if (!existing.empty) {
-        const notifRef = existing.docs[0].ref;
-        await updateDoc(notifRef, {
-          message: `${currentUser.displayName || "Alguien"} y otr@s compartieron tu publicación.`,
-          notificationDate: new Date()
-        });
-      } else {
-        await addDoc(collection(db, "notifications"), {
-          UserId: postData.authorId,
-          message: `${currentUser.displayName || "Alguien"} compartió tu publicación.`,
-          notificationDate: new Date(),
-          readed: false,
-          type: "share",
-          postId: postIdToShare
-        });        
+  
+      const postData = postSnapshot.data();
+  
+      // Crear nuevo post compartido
+      await addDoc(collection(db, "posts"), {
+        content: shareText || "",
+        category: "📤 Compartido",
+        authorId: currentUser.uid,
+        author: currentUser.displayName || currentUser.email,
+        createdAt: serverTimestamp(),
+        likes: [],
+        comments: [],
+        privacy: postData.privacy,
+        reports: [],
+        sharedFrom: postIdToShare,
+        status: "enabled",
+        originalPost: {
+          content: postData.content,
+          author: postData.author,
+          mediaUrl: postData.mediaUrl || "",
+          category: postData.category || "",
+          additionalText: postData.additionalText || "",
+          createdAt: postData.createdAt || null
+        }
+      });
+  
+      // Notificación al autor original
+      if (postData.authorId !== currentUser.uid) {
+        const userRef = doc(db, "users", postData.authorId);
+        const existing = await getDocs(
+          query(
+            collection(db, "notifications"),
+            where("UserId", "==", userRef),
+            where("type", "==", "share"),
+            where("readed", "==", false),
+            where("postId", "==", postIdToShare)
+          )
+        );
+  
+        if (!existing.empty) {
+          const notifRef = existing.docs[0].ref;
+          await updateDoc(notifRef, {
+            message: `${currentUser.displayName || "Alguien"} y otr@s compartieron tu publicación.`,
+            notificationDate: new Date()
+          });
+        } else {
+          await addDoc(collection(db, "notifications"), {
+            UserId: userRef,
+            message: `${currentUser.displayName || "Alguien"} compartió tu publicación.`,
+            notificationDate: new Date(),
+            readed: false,
+            type: "share",
+            postId: postIdToShare
+          });
+        }
       }
+  
+      alert("¡Has compartido esta publicación dentro de SkillHub!");
+      setShareModal(false);
+    } catch (error) {
+      console.error("Error al compartir dentro de la app:", error);
+      alert("Ocurrió un error al compartir la publicación.");
     }
-
-    alert("¡Has compartido esta publicación dentro de SkillHub!");
-    setShareModal(false);
-  } catch (error) {
-    console.error("Error al compartir dentro de la app:", error);
-    alert("Ocurrió un error al compartir la publicación.");
-  }
-};
+  };  
+  
   const handleDeletePost = async (postId) => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta publicación?")) {
       await db.collection("posts").doc(postId).delete();
@@ -683,19 +688,16 @@ const handleConfirmShare = async () => {
       <div className={`mt-3 ${viewMode === "grid" ? "d-flex flex-wrap gap-3" : ""}`}>
         
       {filteredPosts.map((post) => (
-          (post.privacy === "public" || post.authorId === currentUser?.uid) && (
-            <div key={post.id} className={`card mb-3 shadow-sm ${viewMode === "grid" ? "p-2" : ""}`}>
-              <div className="card-body" onClick={() => togglePostExpand(post.id)} style={{ cursor: "pointer" }}>
-                <h5 className="d-flex justify-content-between">
-                  <span>{post.author}</span>
-                  <span className="badge bg-secondary">{post.category}</span>
-                </h5>
-                {post.sharedBy?.length > 0 && (
-                  <p className="text-muted"><small>Compartido por: {post.sharedBy.join(", ")}</small></p>
-                )}
-                <p>{post.content}</p>
+        (post.privacy === "public" || post.authorId === currentUser?.uid) && (
+          <div key={post.id} className={`card mb-3 shadow-sm ${viewMode === "grid" ? "p-2" : ""}`}>
+            <div className="card-body" onClick={() => togglePostExpand(post.id)} style={{ cursor: "pointer" }}>
+              <h5 className="d-flex justify-content-between">
+                <span>{post.author}</span>
+                <span className="badge bg-secondary">{post.category}</span>
+              </h5>
+              <p>{post.content}</p>
 
-                {post.mediaUrl && (
+              {post.mediaUrl && (
                 isYouTubeUrl(post.mediaUrl) ? (
                   <iframe
                     src={`https://www.youtube.com/embed/${extractYouTubeId(post.mediaUrl)}`}
@@ -710,7 +712,6 @@ const handleConfirmShare = async () => {
                 ) : isVideoUrl(post.mediaUrl) ? (
                   <video controls className="w-100 mt-2 rounded">
                     <source src={post.mediaUrl} type="video/mp4" />
-                    Tu navegador no soporta el video.
                   </video>
                 ) : isImageUrl(post.mediaUrl) ? (
                   <img src={post.mediaUrl} alt="media" className="img-fluid mt-2 rounded" />
@@ -719,67 +720,97 @@ const handleConfirmShare = async () => {
                 )
               )}
 
-              </div>
-  
-              {expandedPost === post.id && (
-                <div className="p-3 border-top">
-                  <button className="btn btn-light me-2" onClick={() => handleLike(post.id)}>
-                    <FaHeart className={post.likes?.includes(currentUser.uid) ? "text-danger" : ""} /> {post.likes?.length || 0}
-                  </button>
-                  <button className="btn btn-light me-2" onClick={() => handleShare(post.id)}><FaShare /></button>
-                  {post.authorId === currentUser.uid && (
-                    <>
-                      <button className="btn btn-outline-warning btn-sm me-2" onClick={() => startEditingPost(post)}>Editar</button>
-                      <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeletePost(post.id)}>Eliminar</button>
-                    </>
+              {/* Si es un post compartido, mostrar el contenido original */}
+              {post.originalPost && (
+                <div className="border rounded p-3 mt-3 bg-light">
+                  <p className="mb-1">
+                    <strong>{post.originalPost.author} dijo:</strong> {post.originalPost.content}
+                  </p>
+                  {post.originalPost.mediaUrl && (
+                    isYouTubeUrl(post.originalPost.mediaUrl) ? (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${extractYouTubeId(post.originalPost.mediaUrl)}`}
+                        width="100%"
+                        height="315"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="YouTube video"
+                        className="rounded"
+                      ></iframe>
+                    ) : isVideoUrl(post.originalPost.mediaUrl) ? (
+                      <video controls className="w-100 mt-2 rounded">
+                        <source src={post.originalPost.mediaUrl} type="video/mp4" />
+                      </video>
+                    ) : isImageUrl(post.originalPost.mediaUrl) ? (
+                      <img
+                        src={post.originalPost.mediaUrl}
+                        alt="Original media"
+                        className="img-fluid mt-2 rounded"
+                      />
+                    ) : (
+                      <p className="text-muted small">No se puede mostrar el archivo original.</p>
+                    )
                   )}
-                  {post.authorId !== currentUser.uid && (
-                    <button
-                      className="btn btn-outline-danger btn-sm"
-                      onClick={() => {
-                        setReportModalPostId(post.id);
-                        setReportDescription("");
-                      }}
-                    >
-                      <FaFlag /> Reportar
-                    </button>
-                  )}
-                  <input type="text" className="form-control mt-2" placeholder="Escribe un comentario..." onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target.value.trim()) {
-                      handleComment(post.id, e.target.value);
-                      e.target.value = "";
-                    }
-                  }} />
-                    <ul className="list-group mt-3">
-                    {postComments.map((comment) => (
-                      <li key={comment.id} className="list-group-item d-flex justify-content-between align-items-start">
-                        <div>
-                          <strong>{comment.author}:</strong> {comment.text}
-                        </div>
-                        <div className="btn-group btn-group-sm">
-                          {comment.authorId === currentUser.uid && (
-                            <>
-                              <button className="btn btn-outline-warning" onClick={() => startEditingComment(post.id, comment)}>Editar</button>
-                              <button className="btn btn-outline-danger" onClick={() => deleteComment(post.id, comment.id)}>Eliminar</button>
-                            </>
-                          )}
-                          {comment.authorId !== currentUser.uid && (
-                            <button
-                              className="btn btn-outline-danger"
-                              onClick={() => reportComment(post.id, comment)}
-                            >
-                              Reportar
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               )}
             </div>
-          )
-        ))}
+
+            {expandedPost === post.id && (
+              <div className="p-3 border-top">
+                <button className="btn btn-light me-2" onClick={() => handleLike(post.id)}>
+                  <FaHeart className={post.likes?.includes(currentUser.uid) ? "text-danger" : ""} /> {post.likes?.length || 0}
+                </button>
+                <button className="btn btn-light me-2" onClick={() => handleShare(post.id)}><FaShare /></button>
+                {post.authorId === currentUser.uid && (
+                  <>
+                    <button className="btn btn-outline-warning btn-sm me-2" onClick={() => startEditingPost(post)}>Editar</button>
+                    <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeletePost(post.id)}>Eliminar</button>
+                  </>
+                )}
+                {post.authorId !== currentUser.uid && (
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => {
+                      setReportModalPostId(post.id);
+                      setReportDescription("");
+                    }}
+                  >
+                    <FaFlag /> Reportar
+                  </button>
+                )}
+                <input type="text" className="form-control mt-2" placeholder="Escribe un comentario..." onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.target.value.trim()) {
+                    handleComment(post.id, e.target.value);
+                    e.target.value = "";
+                  }
+                }} />
+                <ul className="list-group mt-3">
+                  {postComments.map((comment) => (
+                    <li key={comment.id} className="list-group-item d-flex justify-content-between align-items-start">
+                      <div>
+                        <strong>{comment.author}:</strong> {comment.text}
+                      </div>
+                      <div className="btn-group btn-group-sm">
+                        {comment.authorId === currentUser.uid && (
+                          <>
+                            <button className="btn btn-outline-warning" onClick={() => startEditingComment(post.id, comment)}>Editar</button>
+                            <button className="btn btn-outline-danger" onClick={() => deleteComment(post.id, comment.id)}>Eliminar</button>
+                          </>
+                        )}
+                        {comment.authorId !== currentUser.uid && (
+                          <button className="btn btn-outline-danger" onClick={() => reportComment(post.id, comment)}>Reportar</button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )
+      ))}
+
       </div>
       {/* Modal para agregar un post */}
       {showModal && (
@@ -891,32 +922,64 @@ const handleConfirmShare = async () => {
 
       {/* Modal de compartir */}
       {shareModal && (
-        <div className="modal-overlay">
-          <div className="modal show d-block" tabIndex="-1" role="dialog">
-            <div className="modal-dialog modal-dialog-centered" role="document">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Compartir publicación</h5>
-                  <button type="button" className="btn-close" onClick={() => setShareModal(false)}></button>
-                </div>
-                <div className="modal-body">
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    placeholder="Escribe algo..."
-                    value={shareText}
-                    onChange={(e) => setShareText(e.target.value)}
-                  />
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShareModal(false)}>Cerrar</button>
-                  <button type="button" className="btn btn-primary" onClick={handleConfirmShare}>Compartir</button>
-                </div>
+        <div
+          className="modal show d-block"
+          tabIndex="-1"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1050,
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered w-100" style={{ maxWidth: "500px" }}>
+            <div className="modal-content shadow">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">Compartir publicación</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShareModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <label htmlFor="shareTextArea" className="form-label">Escribí algo adicional (opcional):</label>
+                <textarea
+                  id="shareTextArea"
+                  className="form-control"
+                  rows="3"
+                  placeholder="Agregá un comentario al compartir..."
+                  value={shareText}
+                  onChange={(e) => setShareText(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShareModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleConfirmShare}
+                >
+                  Compartir
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
       {reportModalPostId && (
         <div
           className="modal show d-block"
