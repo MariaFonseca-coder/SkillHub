@@ -1,0 +1,200 @@
+/* src/styles/signup.css */
+
+/* ===== Bloque: signup ===== */
+
+/* Contenedor centrado */
+.signup__auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  padding: 1rem;
+}
+
+/* Tarjeta principal */
+.signup__form-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Círculos decorativos */
+.signup__form-wrapper::before,
+.signup__form-wrapper::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.2;
+}
+.signup__form-wrapper::before {
+  width: 200px;
+  height: 200px;
+  background: #0E57A6;
+  top: -60px;
+  left: -60px;
+}
+.signup__form-wrapper::after {
+  width: 180px;
+  height: 180px;
+  background: #59BD7F;
+  bottom: -50px;
+  right: -50px;
+}
+
+/* Centrado de hijos */
+.signup__form-wrapper > * {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Título */
+.signup__title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #0E57A6;
+  font-size: 1.75rem;
+}
+
+/* Inputs y select */
+.signup__form input,
+.signup__form select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+.signup__form input:focus,
+.signup__form select:focus {
+  outline: none;
+  border-color: #0E57A6;
+}
+
+/* Mensajes de error */
+.signup__error-message {
+  color: #B92B41;
+  font-size: 0.875rem;
+  margin: 0.25rem 0 1rem;
+  text-align: left;
+}
+
+/* Campo de ubicación */
+.signup__location-field {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.signup__location-field input {
+  flex: 1;
+}
+.signup__location-field button {
+  background-color: #0E57A6;          /* Azul normal */
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.signup__location-field button:hover {
+  background-color: #4B80D3;          /* Azul claro en hover */
+  transform: scale(1.02);
+}
+
+/* Botón principal */
+.signup__btn--primary {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #0E57A6;          /* Azul normal */
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 0.5rem;
+}
+.signup__btn--primary:hover {
+  background-color: #4B80D3;          /* Azul claro en hover */
+  transform: scale(1.02);
+}
+
+/* Selección de rol */
+.signup__user-type {
+  text-align: center;
+  margin: 1rem 0;
+}
+.signup__user-type label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+.signup__user-type select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+.signup__user-type select:focus {
+  outline: none;
+  border-color: #0E57A6;
+}
+
+/* Textos inferiores — centrados */
+.signup__bottom-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #555;
+}
+.signup__bottom-text a {
+  color: #0E57A6;
+  text-decoration: none;
+}
+.signup__bottom-text a:hover {
+  text-decoration: underline;
+}
+
+/* Desktop: full-width pero centrado */
+@media (min-width: 768px) {
+  .signup__auth-container {
+    padding: 0;
+    align-items: flex-start;
+  }
+  .signup__form-wrapper {
+    max-width: none;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 2rem;
+    margin: 0 1rem;
+  }
+}
+
+/* Ajustes para móviles muy pequeños */
+@media (max-width: 480px) {
+  .signup__form-wrapper {
+    padding: 2rem 1.5rem;
+  }
+  .signup__title {
+    font-size: 1.5rem;
+  }
+}

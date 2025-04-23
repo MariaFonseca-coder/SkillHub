@@ -1,143 +1,284 @@
 // src/components/Signup.js
 import React, { useState } from 'react';
+import validator from 'validator';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../styles/auth.css';
+
+
+import '../styles/signup.css';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [location, setLocation] = useState('');
-  const [userType, setUserType] = useState('student'); // 'student' o 'teacher'
+  const [userType, setUserType] = useState('student');
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    confirm: '',
+    username: '',
+    fullName: '',
+    location: '',
+    global: ''
+  });
 
   const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
+  const handleEmailChange = e => {
+    const value = e.target.value;
+    setEmail(value);
+    setErrors(prev => ({
+      ...prev,
+      email: validator.isEmail(value) ? '' : 'Correo inválido'
+    }));
+  };
+
+  const handlePasswordChange = e => {
+    const value = e.target.value;
+    setPassword(value);
+    setErrors(prev => ({
+      ...prev,
+      password: validator.isLength(value, { min: 6 })
+        ? ''
+        : 'La contraseña debe tener al menos 6 caracteres',
+      confirm:
+        confirm && value !== confirm
+          ? 'Las contraseñas no coinciden'
+          : prev.confirm
+    }));
+  };
+
+  const handleConfirmChange = e => {
+    const value = e.target.value;
+    setConfirm(value);
+    setErrors(prev => ({
+      ...prev,
+      confirm: password !== value ? 'Las contraseñas no coinciden' : ''
+    }));
+  };
+
+  const handleUsernameChange = e => {
+    const value = e.target.value;
+    setUsername(value);
+    setErrors(prev => ({
+      ...prev,
+      username: validator.isEmpty(value.trim())
+        ? 'El nombre de usuario no puede estar vacío'
+        : ''
+    }));
+  };
+
+  const handleFullNameChange = e => {
+    const value = e.target.value;
+    setFullName(value);
+    setErrors(prev => ({
+      ...prev,
+      fullName: validator.isEmpty(value.trim())
+        ? 'El nombre completo no puede estar vacío'
+        : ''
+    }));
+  };
+
+  const handleLocationChange = e => {
+    const value = e.target.value;
+    setLocation(value);
+    setErrors(prev => ({
+      ...prev,
+      location: validator.isEmpty(value.trim())
+        ? 'La ubicación no puede estar vacía'
+        : ''
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!validator.isEmail(email)) newErrors.email = 'Correo inválido';
+    if (!validator.isLength(password, { min: 6 }))
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    if (password !== confirm) newErrors.confirm = 'Las contraseñas no coinciden';
+    if (validator.isEmpty(username.trim()))
+      newErrors.username = 'El nombre de usuario no puede estar vacío';
+    if (validator.isEmpty(fullName.trim()))
+      newErrors.fullName = 'El nombre completo no puede estar vacío';
+    if (validator.isEmpty(location.trim()))
+      newErrors.location = 'La ubicación no puede estar vacía';
+
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignup = async e => {
     e.preventDefault();
-    if (password !== confirm) {
-      return alert("Las contraseñas no coinciden");
-    }
+    if (!validateForm()) return;
+
     try {
-      // 1. Registrar al usuario en Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // 2. Obtener el token de Firebase
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const token = await userCredential.user.getIdToken();
+      localStorage.setItem('firebaseToken', token);
 
-      // 2.1. Guarda el token en localStorage para usarlo más tarde
-       localStorage.setItem('firebaseToken', token);
-
-       
-      // 3. Llamar al endpoint de Django para crear/actualizar el perfil en Firestore
-      await axios.post('http://localhost:8000/api/firebase-signup/', { 
+      await axios.post('http://localhost:8000/api/firebase-signup/', {
         token,
-
-        role: userType, // Se envía "teacher" o "student"
+        role: userType,
         username,
         full_name: fullName,
         location
       });
-      // 4. Redirigir según el tipo de usuario: docente a "/teacher", estudiante a "/feed"
-      if (userType === 'teacher') {
-        navigate('/teacher');
-      } else {
-        navigate('/feed');
-      }
+
+      navigate(userType === 'teacher' ? '/teacher' : '/feed');
     } catch (error) {
-      console.error("Error al registrar:", error);
+      console.error('Error al registrar:', error);
+      setErrors(prev => ({
+        ...prev,
+        global:
+          'Se produjo un error durante el registro. Por favor, inténtalo de nuevo.'
+      }));
     }
   };
 
-  // Función para obtener la ubicación usando geolocalización y reverse geocoding (por ejemplo, Nominatim)
   const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-          const data = await response.json();
-          if (data && data.display_name) {
-            setLocation(data.display_name);
-          } else {
-            alert("No se pudo obtener la dirección");
-          }
-        } catch (err) {
-          console.error("Error al obtener la ubicación", err);
-          alert("Error al obtener la ubicación");
-        }
-      }, (error) => {
-        console.error("Error al obtener la geolocalización:", error);
-        alert("Error al obtener la geolocalización");
-      });
-    } else {
-      alert("Geolocalización no soportada en este navegador");
+    if (!navigator.geolocation) {
+      setErrors(prev => ({
+        ...prev,
+        location: 'Geolocalización no soportada en este navegador.'
+      }));
+      return;
     }
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`
+          );
+          const data = await resp.json();
+          if (data.display_name) {
+            setLocation(data.display_name);
+            setErrors(prev => ({ ...prev, location: '' }));
+          } else {
+            throw new Error();
+          }
+        } catch {
+          setErrors(prev => ({
+            ...prev,
+            location: 'No se pudo obtener la dirección.'
+          }));
+        }
+      },
+      () => {
+        setErrors(prev => ({
+          ...prev,
+          location: 'Error al obtener la geolocalización.'
+        }));
+      }
+    );
   };
 
   return (
-    <div className="auth-container">
-      <div className="form-wrapper">
-        <h2>Sign Up</h2>
-        <form onSubmit={handleSignup}>
-          <input 
-            type="text" 
-            placeholder="Username" 
-            value={username} 
-            onChange={e => setUsername(e.target.value)} 
-            required 
+    <div className="signup__auth-container">
+      <div className="signup__form-wrapper">
+        <h2 className="signup__title">Sign Up</h2>
+        {errors.global && (
+          <div className="signup__error-message">{errors.global}</div>
+        )}
+        <form onSubmit={handleSignup} className="signup__form">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={handleUsernameChange}
+            required
           />
-          <input 
-            type="text" 
-            placeholder="Nombre Completo" 
-            value={fullName} 
-            onChange={e => setFullName(e.target.value)} 
-            required 
+          {errors.username && (
+            <div className="signup__error-message">{errors.username}</div>
+          )}
+          <input
+            type="text"
+            placeholder="Nombre Completo"
+            value={fullName}
+            onChange={handleFullNameChange}
+            required
           />
-          <input 
-            type="email" 
-            placeholder="Email" 
-            value={email} 
-            onChange={e => setEmail(e.target.value)} 
-            required 
+          {errors.fullName && (
+            <div className="signup__error-message">{errors.fullName}</div>
+          )}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={handleEmailChange}
+            required
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            value={password} 
-            onChange={e => setPassword(e.target.value)} 
-            required 
+          {errors.email && (
+            <div className="signup__error-message">{errors.email}</div>
+          )}
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={handlePasswordChange}
+            required
           />
-          <input 
-            type="password" 
-            placeholder="Confirm Password" 
-            value={confirm} 
-            onChange={e => setConfirm(e.target.value)} 
-            required 
+          {errors.password && (
+            <div className="signup__error-message">{errors.password}</div>
+          )}
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={confirm}
+            onChange={handleConfirmChange}
+            required
           />
-          <div className="location-field">
-            <input 
-              type="text" 
-              placeholder="Ubicación" 
-              value={location} 
-              onChange={e => setLocation(e.target.value)} 
-              required 
+          {errors.confirm && (
+            <div className="signup__error-message">{errors.confirm}</div>
+          )}
+
+          <div className="signup__location-field">
+            <input
+              type="text"
+              placeholder="Ubicación"
+              value={location}
+              onChange={handleLocationChange}
+              required
             />
-            <button type="button" onClick={getLocation}>Obtener Ubicación</button>
+            <button type="button" onClick={getLocation}>
+              Obtener Ubicación
+            </button>
           </div>
-          {/* Seleccionar si es docente o estudiante */}
-          <select value={userType} onChange={e => setUserType(e.target.value)}>
-            <option value="student">Estudiante</option>
-            <option value="teacher">Docente</option>
-          </select>
-          <button type="submit" className="login-btn">SIGN UP</button>
+          {errors.location && (
+            <div className="signup__error-message">{errors.location}</div>
+          )}
+
+          <div className="signup__user-type">
+            <label htmlFor="userType">Registrarse como:</label>
+            <select
+              id="userType"
+              value={userType}
+              onChange={e => setUserType(e.target.value)}
+            >
+              <option value="student">Estudiante</option>
+              <option value="teacher">Docente</option>
+            </select>
+          </div>
+
+          <button type="submit" className="signup__btn--primary">
+            SIGN UP
+          </button>
         </form>
-        <p>Already have an account? <a href="/">Login</a></p>
-        <p><a href="/politicas">Ver Políticas</a></p>
+
+        <p className="signup__bottom-text">
+          Already have an account? <a href="/">Login</a>
+        </p>
+        <p className="signup__bottom-text">
+          <a href="/politicas">Ver Políticas</a>
+        </p>
       </div>
     </div>
   );
