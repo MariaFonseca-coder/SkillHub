@@ -1,77 +1,82 @@
+.recover-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f2f5fa;
+  padding: 20px;
+}
 
-.auth-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f4f4f4;
-  }
-  
-  .form-wrapper {
-    width: 100%;
-    max-width: 400px;
-    padding: 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-  }
-  
-  .form-wrapper h2 {
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-wrapper input,
-  .form-wrapper select {
-    width: 100%;
-    padding: 0.8rem;
-    margin: 0.5rem 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-  }
-  
-  .login-btn {
-    width: 100%;
-    padding: 0.8rem;
-    margin-top: 1rem;
-    background-color: #4285F4;
-    border: none;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .login-btn:hover {
-    background-color: #357ae8;
-  }
-  
-  .google-btn {
-    width: 100%;
-    padding: 0.8rem;
-    margin-top: 1rem;
-    background-color: white;
-    border: 1px solid #ccc;
-    color: #444;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .google-btn::before {
-    content: url('https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg');
-    padding-right: 10px;
-    vertical-align: middle;
-  }
-  
-  .forgot-link {
-    text-align: right;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-  }
-  
-  .forgot-link a, .form-wrapper a {
-    color: #4285F4;
-    text-decoration: none;
-  }
-  
+/* Tarjeta de formulario */
+.recover-card {
+  background-color: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Título */
+.recover-title {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+/* Formulario */
+.recover-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Input */
+.recover-input {
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* Botón */
+.recover-button {
+  background-color: #0047AB;
+  color: white;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.recover-button:hover {
+  background-color: #003a8b;
+}
+
+/* Mensaje */
+.recover-message {
+  margin-top: 12px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Enlaces */
+.recover-links {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.recover-links a {
+  color: #0047AB;
+  text-decoration: none;
+}
+
+.recover-links a:hover {
+  text-decoration: underline;
+}

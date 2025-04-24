@@ -1,24 +1,27 @@
 .dashboard-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #e6f0ff;
-  }
-  
-  .dashboard-box {
-    background: white;
-    padding: 3rem;
-    border-radius: 16px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    text-align: center;
-  }
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 100vh;
+  background-color: #e6f0ff;
+  overflow-y: auto;
+}
+
+.dashboard-box {
+  background: white;
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
+}
   
   .dashboard-box h1 {
     margin-bottom: 1rem;
   }
   
-  .dashboard-box button {
+  .dashboard-box > .main-button {
     margin-top: 2rem;
     background-color: #f44336;
     color: white;
@@ -28,7 +31,95 @@
     cursor: pointer;
   }
   
+  
   .dashboard-box button:hover {
-    background-color: #d32f2f;
+    background-color: blue;
   }
+  
+  .dashboard-toggle {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-toggle button {
+    margin-right: 10px;
+    padding: 10px 20px;
+    font-weight: bold;
+    border: none;
+    background-color: #e0e0e0;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .dashboard-toggle button.active {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .friend-card {
+    display: flex;
+    align-items: center;
+    background-color: #f4f4f4;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+  
+  .friend-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 16px;
+  }
+  
+  .friend-info {
+    flex-grow: 1;
+    margin-right: 16px;
+
+  }
+  
+  .friend-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  .friend-role,
+  .friend-created {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  
+  .delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    align-self: center;
+    height: fit-content;
+  }
+
+  .delete-btn.disable {
+    background-color: #f44336; /* rojo */
+  }
+  
+  .delete-btn.enable {
+    background-color: #4caf50; /* verde */
+  }
+  
+  .reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .report-card {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }
+ 
   

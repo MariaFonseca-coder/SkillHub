@@ -32,6 +32,7 @@ class FirebaseSignupView(APIView):
         biography = ""
         privacy = "public"
         foto_perfil = ""
+        estado = "enabled" #annadido por Allan para manejar el deshabilitar cuenta
 
         try:
             # 1. Verificar el token con Firebase
@@ -70,7 +71,8 @@ class FirebaseSignupView(APIView):
                 'biografia': biography,
                 'privacidad': privacy,
                 'fotoPerfil': foto_perfil,
-                'role': role,
+                'role': role, 
+                'status': estado, #annadido por Allan para manejar el deshabilitar cuenta
                 'createdAt': firestore.SERVER_TIMESTAMP
             }, merge=True)
 
@@ -142,7 +144,7 @@ def password_reset_request(request):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from firebase_admin import firestore  # Asegúrate de que firebase_admin esté inicializado
+from firebase_admin import firestore  
 from django.contrib.auth.models import User
 
 class PasswordResetRequestView(APIView):
@@ -158,15 +160,9 @@ class PasswordResetRequestView(APIView):
         if not email:
             return Response({"error": "No se proporcionó un correo"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. Verifica si el usuario exi ste en Django (opcional si solo usás Firebase)
-        #. user_exists = User.objects.filter(email=email).exists()
 
-        # if not user_exists:
-          #  return Response({"error": "Este correo no está registrado"}, status=status.HTTP_404_NOT_FOUND)
-
-        # 2. Busca en Firestore el usuario con ese email y obtiene su rol
         db = firestore.client()
-        users_ref = db.collection("users")  # Asegurate de que la colección se llame así
+        users_ref = db.collection("users")
         query = users_ref.where("email", "==", email).limit(1).stream()
 
         user_data = None
@@ -227,7 +223,7 @@ class FriendListView(APIView):
                     friend_data = friend_doc.to_dict()
                     friends.append({
                         "id": friend_id,
-                        "name": friend_data.get("displayName", "Desconocido"),
+                        "name": friend_data.get("name", "Desconocido"),
                         "fotoPerfil": friend_data.get("fotoPerfil", "")
                     })
 
@@ -274,7 +270,7 @@ class FollowersListView(APIView):
                         follower_data = follower_doc.to_dict()
                         followers.append({
                             "id": follower_id,
-                            "name": follower_data.get("displayName", "Desconocido"),
+                            "name": follower_data.get("name", "Desconocido"),
                             "fotoPerfil": follower_data.get("fotoPerfil", "")
                         })
 
@@ -392,7 +388,7 @@ class DeleteFollowerView(APIView):
 
 class GetUserInfoView(APIView):
     """
-    Devuelve el displayName y la fotoPerfil de un usuario a partir de su ID.
+    Devuelve el name y la fotoPerfil de un usuario a partir de su ID.
     """
 
     def get(self, request):
@@ -410,7 +406,7 @@ class GetUserInfoView(APIView):
             user_data = user_ref.to_dict()
             return Response({
                 "id": friend_id,
-                "displayName": user_data.get("displayName") or user_data.get("name", "Desconocido"),
+                "name": user_data.get("name", "Desconocido"),
                 "fotoPerfil": user_data.get("fotoPerfil", "")
             }, status=status.HTTP_200_OK)
 
@@ -475,19 +471,20 @@ class GetChatIdView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class SendMessageView(APIView):
     """
-    Guarda un nuevo mensaje en Firestore con chatId, texto, user y marca de tiempo.
+    Guarda un nuevo mensaje en Firestore y crea una notificación con datos específicos.
     """
 
     def post(self, request):
         chat_id = request.data.get("chatId")
         text = request.data.get("text")
-        user_id = request.data.get("userId")
-        recipient_id = request.data.get("recipientId")
+        user_id = request.data.get("userId")        # Remitente
+        receiver_id = request.data.get("receiverId")  # Receptor
 
-        if not chat_id or not text or not user_id:
-            return Response({"error": "Faltan parámetros (chatId, text o userId)."}, status=status.HTTP_400_BAD_REQUEST)
+        if not chat_id or not text or not user_id or not receiver_id:
+            return Response({"error": "Faltan parámetros (chatId, text, userId o receiverId)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
 
@@ -501,10 +498,10 @@ class SendMessageView(APIView):
                 "chatId": db.document(f"chat/{chat_id}"),
                 "text": text,
                 "time": datetime.utcnow(),
-                "user": db.document(f"users/{user_id}")
+                "user": sender_ref
             }
             notification_data = {
-                "UserId": db.document(f"users/{recipient_id}"),
+                "UserId": db.document(f"users/{user_id}"),
                 "type": "message",
                 "message": f"{sender_display_name} te ha enviado un mensaje: {text}",
                 "notificationDate": datetime.utcnow(),
@@ -515,7 +512,11 @@ class SendMessageView(APIView):
 
             db.collection("message").add(message_data)
 
-            return Response({"success": True, "message": "Mensaje enviado correctamente."}, status=status.HTTP_201_CREATED)
+       
+
+            db.collection("notifications").add(notification_data)
+
+            return Response({"success": True, "message": "Mensaje y notificación creados correctamente."}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
