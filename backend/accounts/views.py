@@ -11,7 +11,6 @@ from rest_framework.decorators import api_view
 from datetime import datetime
 
 
-
 class FirebaseSignupView(APIView):
     """
     Recibe un token de Firebase y campos adicionales para crear/actualizar la información
@@ -89,54 +88,32 @@ class FirebaseSignupView(APIView):
 class FirebaseLoginView(APIView):
     """
     Recibe un token de Firebase, lo verifica y asocia/crea un usuario en Django.
-    Además, crea (o actualiza) un documento en la colección 'users' de Firestore con valores genéricos,
-    tomando el correo de Google y asignando por defecto algunos valores, incluyendo el rol (teacher o student).
+    Devuelve el rol del usuario para que el frontend redirija a la vista adecuada.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         token = request.data.get('token')
-        # Se puede recibir el parámetro userType (ej. "teacher" o "student")
-        userType = request.data.get('userType', 'student')  # por defecto "student"
         if not token:
             return Response({'error': 'No se proporcionó token'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             decoded_token = firebase_auth.verify_id_token(token)
             uid = decoded_token.get('uid')
             email = decoded_token.get('email')
-            
-            # Crear o recuperar el usuario en Django
             user, created = User.objects.get_or_create(
                 email=email, 
                 defaults={'username': email.split('@')[0]}
             )
-            # Definir rol en Django (por ejemplo, 'admin' si es staff, sino el rol enviado)
-            role = 'admin' if user.is_staff else userType
-
-            # Datos genéricos para el documento en Firestore
+            # Valor por defecto: si el usuario tiene permisos administrativos
+            role = 'admin' if user.is_staff else 'user'
+            
+            # Consultar en Firestore para obtener el rol guardado (por ejemplo, "teacher" o "student")
             db = firestore.client()
             user_doc_ref = db.collection('users').document(uid)
             user_doc = user_doc_ref.get()
-
-            # Valores genéricos, se pueden ajustar según se requiera
-            new_user_data = {
-                "username": email.split('@')[0],
-                "email": email,
-                "displayName": decoded_token.get("name", ""),
-                "fotoPerfil": decoded_token.get("picture", ""),  # si está disponible
-                "biografia": "Esta es mi biografía",
-                "location": "Sin definir",
-                "privacidad": "public",
-                "role": role,
-                "created_at": firestore.SERVER_TIMESTAMP
-            }
-
             if user_doc.exists:
-                # Actualizamos o mantenemos los campos existentes sin sobreescribir ciertos valores
-                # Si lo prefieres, puedes hacer un update con new_user_data
-                user_doc_ref.update(new_user_data)
-            else:
-                user_doc_ref.set(new_user_data)
+                data = user_doc.to_dict()
+                role = data.get('role', role)
 
             return Response({
                 'mensaje': 'Autenticación exitosa',
@@ -149,7 +126,7 @@ class FirebaseLoginView(APIView):
                 'error': 'Token inválido o expirado',
                 'detalle': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
 @api_view(['POST'])
 def password_reset_request(request):
     email = request.data.get('email')
