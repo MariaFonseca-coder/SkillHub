@@ -51,6 +51,7 @@ const Profile = () => {
             const profile = response.data;
             const isOwn = !paramUserId || profile.id === currentUserId;
 
+            console.log(profile);
             setProfileData(profile);
             setLoading(false);
         })
@@ -60,6 +61,46 @@ const Profile = () => {
         });
 
     }, [token, paramUserId, currentUserId]);
+
+    const handleAddFriend = () => {
+        if (!token) {
+            alert('You must be logged in to add a friend.');
+            return;
+        }
+
+        axios.post(`http://localhost:8000/api/profile/add-friend/${paramUserId}/`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+        })
+        .catch(error => {
+            console.error('Error adding friend:', error);
+            alert(error.response?.data?.error || 'An error occurred while adding the friend.');
+        });
+    };
+
+    const handleAddFollower = () => {
+        if (!token) {
+            alert('You must be logged in to follow someone.');
+            return;
+        }
+
+        axios.post(`http://localhost:8000/api/profile/add-follower/${paramUserId}/`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+        })
+        .catch(error => {
+            console.error('Error adding follower:', error);
+            alert(error.response?.data?.error || 'An error occurred while adding the follower.');
+        });
+    };
+
+    const handleSendMessage = () => {
+        navigate(`/chat/${paramUserId}`);
+    };
 
     const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
 
@@ -80,14 +121,14 @@ const Profile = () => {
             <p>Email: {profileData.email}</p>
             <p>Biography: {profileData.biografia}</p>
             <p>Name: {profileData.name}</p>
-            {/* Campos agregados */}
             <p>Role: {profileData.role}</p>
 
             {!isOwnProfile && (
                 <div className='actions-profile'>
-                    <button className='btn-Add-friend'>Add friend</button>
+                    <button className='btn-Add-friend' onClick={handleAddFriend}>Add friend</button>
                     <button className='btn-profile-report'>Report</button>
-                    <button className='btn-message-profile'>Message</button>
+                    <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
+                    <button className='btn-follow' onClick={handleAddFollower}>Follow</button>
                 </div>
             )}
 
@@ -99,7 +140,7 @@ const Profile = () => {
 
             {!isOwnProfile && profileData.privacidad === 'private' && (
                 <div className="profile-info-message private">
-                    <FaLock className="lock-icon" /> {/* Icono de candado */}
+                    <FaLock className="lock-icon" />
                     Este perfil es privado. Para ver más contenido deberás ser amigo.
                 </div>
             )}

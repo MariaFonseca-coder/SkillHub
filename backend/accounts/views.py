@@ -410,7 +410,7 @@ class GetUserInfoView(APIView):
             user_data = user_ref.to_dict()
             return Response({
                 "id": friend_id,
-                "displayName": user_data.get("displayName", "Desconocido"),
+                "displayName": user_data.get("displayName") or user_data.get("name", "Desconocido"),
                 "fotoPerfil": user_data.get("fotoPerfil", "")
             }, status=status.HTTP_200_OK)
 
@@ -484,17 +484,34 @@ class SendMessageView(APIView):
         chat_id = request.data.get("chatId")
         text = request.data.get("text")
         user_id = request.data.get("userId")
+        recipient_id = request.data.get("recipientId")
 
         if not chat_id or not text or not user_id:
             return Response({"error": "Faltan parámetros (chatId, text o userId)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+
+            sender_ref = db.collection("users").document(user_id).get()
+            if not sender_ref.exists:
+                return Response({"error": "Usuario remitente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+            sender_data = sender_ref.to_dict()
+            sender_display_name = sender_data.get("displayName") or sender_data.get("name", "Usuario desconocido")
             message_data = {
                 "chatId": db.document(f"chat/{chat_id}"),
                 "text": text,
                 "time": datetime.utcnow(),
                 "user": db.document(f"users/{user_id}")
             }
+            notification_data = {
+                "UserId": db.document(f"users/{recipient_id}"),
+                "type": "message",
+                "message": f"{sender_display_name} te ha enviado un mensaje: {text}",
+                "notificationDate": datetime.utcnow(),
+                "readed": False
+            }
+            db.collection("notifications").add(notification_data)
+
 
             db.collection("message").add(message_data)
 
@@ -502,3 +519,4 @@ class SendMessageView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -29,7 +29,20 @@ const Notifications = () => {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
-            setNotifications(response.data);
+            const formattedNotifications = response.data.map(notification => {
+                // Si userId es una referencia, extraer solo el ID
+                if (notification.userId && typeof notification.userId === 'string' && notification.userId.startsWith('/users/')) {
+                    notification.userId = notification.userId.split('/users/')[1];
+                }
+
+                // Asegurarse de que notificationDate esté en un formato válido
+                if (notification.notificationDate) {
+                    notification.notificationDate = new Date(notification.notificationDate).toISOString();
+                }
+
+                return notification;
+            });
+            setNotifications(formattedNotifications);
         })
         .catch(error => {
             console.error('Error fetching notifications:', error);
