@@ -231,6 +231,127 @@ class FriendListView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class FriendListViewPending(APIView):
+    def get(self, request):
+        # Obtener el token del encabezado Authorization
+        auth_header = request.headers.get('Authorization')
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Token no proporcionado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
+
+        try:
+            # Verificar el token de Firebase y obtener el uid
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+        except Exception as e:
+            return Response({"error": f"Token inválido: {str(e)}"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            friendships_ref = db.collection("friendships")
+            query = friendships_ref.where("state", "==", "pending").stream()
+
+            friends = []
+
+            for friendship in query:
+                data = friendship.to_dict()
+                userId1 = data.get("userId1").id
+                userId2 = data.get("userId2").id
+
+                if user_id == userId1:
+                    friend_id = userId2
+                elif user_id == userId2:
+                    friend_id = userId1
+                else:
+                    continue
+
+                friend_doc = db.collection("users").document(friend_id).get()
+                if friend_doc.exists:
+                    friend_data = friend_doc.to_dict()
+                    friends.append({
+                        "id": friend_id,
+                        "name": friend_data.get("name", "Desconocido"),
+                        "fotoPerfil": friend_data.get("fotoPerfil", "")
+                    })
+
+            return Response({"friends": friends}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def put(self, request):
+        # Obtener el token del encabezado Authorization
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return Response({"error": "Authorization header missing or invalid."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        id_token = auth_header.split(" ")[1]
+
+        try:
+            # Verificar el token de Firebase y obtener el uid
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token["uid"]
+
+            # Obtener el friend_id y el nuevo estado del cuerpo de la solicitud
+            friend_id = request.data.get("friend_id")
+            new_state = request.data.get("state")
+
+            if not friend_id or not new_state:
+                return Response({"error": "Missing friend_id or state in request."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if new_state not in ["accepted", "denied"]:
+                return Response({"error": "Invalid state. Must be 'accepted' or 'denied'."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Buscar la relación de amistad en Firestore
+            friendships_ref = db.collection("friendships")
+            query = friendships_ref.where("state", "==", "pending").stream()
+
+            for friendship in query:
+                data = friendship.to_dict()
+                userId1 = data.get("userId1").id
+                userId2 = data.get("userId2").id
+
+                # Verificar si la relación de amistad involucra al usuario actual y al friend_id
+                if (user_id == userId1 and friend_id == userId2) or (user_id == userId2 and friend_id == userId1):
+                    # Actualizar el estado de la relación de amistad
+                    friendship.reference.update({"state": new_state})
+
+                    # Obtener el nombre del usuario actual
+                    user_doc = db.collection("users").document(user_id).get()
+                    user_name = user_doc.to_dict().get("name", "Usuario desconocido")
+
+                    # Determinar el ID del usuario que recibirá la notificación
+                    followed_id = userId2 if user_id == userId1 else userId1
+
+                    # Crear el mensaje de notificación basado en el estado
+                    if new_state == "accepted":
+                        message = f"{user_name} aceptó tu solicitud de amistad."
+                    else:  # new_state == "denied"
+                        message = f"{user_name} rechazó tu solicitud de amistad."
+
+                    # Crear la notificación
+                    notification_data = {
+                        "UserId": db.document(f"users/{followed_id}"),
+                        "type": "friendship",
+                        "message": message,
+                        "notificationDate": datetime.utcnow(),
+                        "readed": False
+                    }
+                    db.collection("notifications").add(notification_data)
+
+                    return Response({"message": f"Friendship updated to {new_state}."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Friendship not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        except auth.InvalidIdTokenError:
+            return Response({"error": "Invalid ID token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except auth.ExpiredIdTokenError:
+            return Response({"error": "Expired ID token."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class FollowersListView(APIView):

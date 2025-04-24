@@ -158,6 +158,14 @@ const Profile = () => {
                 </Link>
             )}
 
+            {isOwnProfile && (
+                <div className="own-profile-actions">
+                    <Link to="/GestionContactos">
+                        <button className="gestion-contactos-button">Gestionar Contactos</button>
+                    </Link>
+                </div>
+            )}
+
             {!isOwnProfile && profileData.privacidad === 'private' && (
                 <div className="profile-info-message private">
                     <FaLock className="lock-icon" />
