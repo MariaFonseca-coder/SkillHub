@@ -406,7 +406,7 @@ class GetUserInfoView(APIView):
             user_data = user_ref.to_dict()
             return Response({
                 "id": friend_id,
-                "name": user_data.get("name", "Desconocido"),
+                "name": user_data.get("name") or user_data.get("name", "Desconocido"),
                 "fotoPerfil": user_data.get("fotoPerfil", "")
             }, status=status.HTTP_200_OK)
 
@@ -481,9 +481,9 @@ class SendMessageView(APIView):
         chat_id = request.data.get("chatId")
         text = request.data.get("text")
         user_id = request.data.get("userId")        # Remitente
-        receiver_id = request.data.get("receiverId")  # Receptor
+        recipient_id = request.data.get("receiverId")  # Receptor
 
-        if not chat_id or not text or not user_id or not receiver_id:
+        if not chat_id or not text or not user_id or not recipient_id:
             return Response({"error": "Faltan parámetros (chatId, text, userId o receiverId)."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -498,10 +498,10 @@ class SendMessageView(APIView):
                 "chatId": db.document(f"chat/{chat_id}"),
                 "text": text,
                 "time": datetime.utcnow(),
-                "user": sender_ref
+                "user": db.document(f"users/{user_id}"),
             }
             notification_data = {
-                "UserId": db.document(f"users/{user_id}"),
+                "UserId": db.document(f"users/{recipient_id}"),
                 "type": "message",
                 "message": f"{sender_display_name} te ha enviado un mensaje: {text}",
                 "notificationDate": datetime.utcnow(),
