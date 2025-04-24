@@ -75,7 +75,6 @@ class PublicProfileView(APIView):
                 'fotoPerfil': user_data.get('fotoPerfil', None),
                 'privacidad': user_data.get('privacidad', 'public'),
                 'role': user_data.get('role', 'user'),  # Default to 'user' if missing
-                'displayName': user_data.get('displayName') 
             }
 
             return Response(public_profile, status=200)
@@ -217,7 +216,7 @@ class AddFriendView(APIView):
                 'userId1': db.document(f'users/{user_id}'),  
                 'userId2': db.document(f'users/{friend_id}'),  
                 'friendshipDate': datetime.utcnow(),  
-                'state': 'accepted'  
+                'state': 'pending'  
             }
             friendships_ref.add(friendship_data)
 
@@ -303,3 +302,52 @@ class AddFollowerView(APIView):
             return Response({'error': 'Invalid token'}, status=401)
         except Exception as e:
             return Response({'error': f'Error adding follower: {str(e)}'}, status=400)
+        
+class ReportUserView(APIView):
+    """
+    Vista para reportar un usuario.
+    Campos esperados:
+        - description: motivo del reporte (string)
+        - userId: ID del usuario que estás reportando (string)
+    """
+    permission_classes = [FirebaseAuthentication]
+
+    def post(self, request):
+        token = request.headers.get('Authorization')
+        if not token:
+            return Response({'error': 'Authorization header is missing'}, status=400)
+
+        try:
+            token = token.split(' ')[1]
+            decoded_token = firebase_auth.verify_id_token(token)
+            reporter_uid = decoded_token.get('uid')
+
+            description = request.data.get('description')
+            reported_user_id = request.data.get('userId')
+
+            if not description or not reported_user_id:
+                return Response({'error': 'description and userId are required'}, status=400)
+
+            db = firestore.client()
+
+            # Obtener referencia a los usuarios
+            user_reported_ref = db.document(f'users/{reporter_uid}')  # Usuario que reporta
+            user_reported_target_ref = db.document(f'users/{reported_user_id}')  # Usuario reportado
+
+            # Datos del reporte
+            report_data = {
+                'description': description,
+                'reportDate': datetime.utcnow(),
+                'state': 'pending',
+                'type': 'user',
+                'userReported': user_reported_target_ref,  # Usuario que reporta
+                #'userReportedTarget': user_reported_target_ref  # Usuario reportado
+            }
+
+            # Agregar reporte a Firestore
+            db.collection('reports').add(report_data)
+
+            return Response({'message': 'User report submitted successfully'}, status=201)
+
+        except Exception as e:
+            return Response({'error': f'Error reporting user: {str(e)}'}, status=400)
