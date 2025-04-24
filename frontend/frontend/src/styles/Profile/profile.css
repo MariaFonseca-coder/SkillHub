@@ -453,12 +453,35 @@
     width: 100%;
     text-align: center;
 }
-
-.cancel-button:hover {
-    opacity: 0.8;  /* Efecto hover para los botones */
+.gestion-contactos-button {
+    background-color: #1abc9c; 
+    color: white;
+    padding: 10px 16px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 50px; 
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    font-weight: 600; 
+    text-transform: uppercase; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Asegurarse de que el botón no tenga estilos que afecten a otros botones */
+.gestion-contactos-button:hover {
+    background-color: #16a085; 
+    transform: translateY(-2px);
+}
+
+.gestion-contactos-button:active {
+    transform: translateY(1px); 
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.cancel-button:hover {
+    opacity: 0.8;  
+}
+
+
 .modal-button:hover {
     opacity: 0.8;
 }
