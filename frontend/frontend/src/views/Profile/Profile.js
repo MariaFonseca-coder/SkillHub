@@ -68,8 +68,51 @@ const Profile = () => {
         setLoading(false);
     });
 
+    
+
 }, [token, paramUserId, currentUserId]);
 
+
+const handleAddFriend = () => {
+    if (!token) {
+        alert('You must be logged in to add a friend.');
+        return;
+    }
+
+    axios.post(`http://localhost:8000/api/profile/add-friend/${paramUserId}/`, {}, { // Pass friendId in the URL
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(response => {
+        alert(response.data.message); // Show success message
+    })
+    .catch(error => {
+        console.error('Error adding friend:', error);
+        alert(error.response?.data?.error || 'An error occurred while adding the friend.');
+    });
+};
+const handleAddFollower = () => {
+    if (!token) {
+        alert('You must be logged in to follow someone.');
+        return;
+    }
+
+    axios.post(`http://localhost:8000/api/profile/add-follower/${paramUserId}/`, {}, { // Pass followedId in the URL
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(response => {
+        alert(response.data.message); // Show success message
+    })
+    .catch(error => {
+        console.error('Error adding follower:', error);
+        alert(error.response?.data?.error || 'An error occurred while adding the follower.');
+    });
+};
+
+
+const handleSendMessage = () => {
+        // Redirigir al componente Chat con el userId del perfil como friendId
+        navigate(`/chat/${paramUserId}`);
+    };
 
     const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
     
@@ -94,9 +137,11 @@ const Profile = () => {
 
             {!isOwnProfile && (
                <div className='actions-profile'>
-               <button className='btn-Add-friend'>Add friend</button>
+               <button className='btn-Add-friend' onClick={handleAddFriend}>Add friend</button>
                <button className='btn-profile-report'>Report</button>
-               <button className='btn-message-profile'>Message</button>
+               <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
+               <button className='btn-follow' onClick={handleAddFollower}>Follow</button>
+
                </div>
             )}
 

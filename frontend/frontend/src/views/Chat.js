@@ -80,7 +80,8 @@ const Chat = () => {
         body: JSON.stringify({
           chatId,
           text: newMessage,
-          userId: currentUserId
+          userId: currentUserId, // Usuario autenticado
+          recipientId: friendId  // Usuario al que se le envía el mensaje
         })
       });
 
