@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
-
+import UserPosts from './Components/UserPosts';
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
 import { FaHome, FaLock } from "react-icons/fa";
+
 
 const Profile = () => {
     const { userId: paramUserId } = useParams(); // Extraer el userId de los parámetros de la URL
@@ -139,6 +140,9 @@ const Profile = () => {
             <p className="profile-info">Email: {profileData.email}</p>
             <p className="profile-info">Biography: {profileData.biografia}</p>
             <p className="profile-info">Name: {profileData.name}</p>
+
+            {/* ✅ Aquí se agregan los posts del usuario */}
+            <UserPosts isOwnProfile={isOwnProfile} userId={paramUserId || currentUserId} />
 
             {!isOwnProfile && (
                 <div className='actions-profile'>

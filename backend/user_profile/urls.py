@@ -1,6 +1,6 @@
 # profile/urls.py
 from django.urls import path
-from .views import ProfileView, UserPostsView, AccountManagementView, PublicProfileView, AddFriendView, AddFollowerView, ReportUserView
+from .views import ProfileView, UserPostsView, AccountManagementView, PublicProfileView, AddFriendView, AddFollowerView, ReportUserView, PublicUserPostsView
 
 urlpatterns = [
     path('', ProfileView.as_view(), name='profile'),
@@ -12,4 +12,5 @@ urlpatterns = [
     #path('notifications/', NotificationsView.as_view(), name='notifications')
     path('report-user/', ReportUserView.as_view(), name='report-user'),
     path('<str:uid>/', PublicProfileView.as_view(), name='public-profile'), 
+    path('<str:uid>/posts/', PublicUserPostsView.as_view(), name='public-user-posts'),
 ]

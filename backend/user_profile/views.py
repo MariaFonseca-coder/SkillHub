@@ -351,3 +351,16 @@ class ReportUserView(APIView):
 
         except Exception as e:
             return Response({'error': f'Error reporting user: {str(e)}'}, status=400)
+        
+
+class PublicUserPostsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, uid):
+        try:
+            db = firestore.client()
+            posts_ref = db.collection('posts').where('userId', '==', f'/users/{uid}').order_by('createdAt', direction=firestore.Query.DESCENDING)
+            posts = [doc.to_dict() | {'id': doc.id} for doc in posts_ref.stream()]
+            return Response(posts)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
