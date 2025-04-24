@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
-import { FaHome } from "react-icons/fa";
+import { FaHome, FaLock } from "react-icons/fa";
 
 const Profile = () => {
     const { userId: paramUserId } = useParams(); // <-- id de la URL
@@ -38,41 +38,30 @@ const Profile = () => {
     }, [token]);
 
     useEffect(() => {
-    if (!token || currentUserId === null) return;
+        if (!token || currentUserId === null) return;
 
-    const url = paramUserId
-        ? `http://localhost:8000/api/profile/${paramUserId}`
-        : 'http://localhost:8000/api/profile';
+        const url = paramUserId
+            ? `http://localhost:8000/api/profile/${paramUserId}`
+            : 'http://localhost:8000/api/profile';
 
-    axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(response => {
-        const profile = response.data;
+        axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            const profile = response.data;
+            const isOwn = !paramUserId || profile.id === currentUserId;
 
-        const isOwn = !paramUserId || profile.id === currentUserId;
-
-       /* if (profile.privacidad === 'private' && !isOwn) {
-            console.log('perfil privado')            
-        } else {
             setProfileData(profile);
-        }
-        */
+            setLoading(false);
+        })
+        .catch(() => {
+            setError('Error al obtener los datos del perfil.');
+            setLoading(false);
+        });
 
-        console.log(profile)        
-        setProfileData(profile);
-        setLoading(false);
-    })
-    .catch(() => {
-        setError('Error al obtener los datos del perfil.');
-        setLoading(false);
-    });
-
-}, [token, paramUserId, currentUserId]);
-
+    }, [token, paramUserId, currentUserId]);
 
     const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
-    
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>{error}</div>;
@@ -82,7 +71,7 @@ const Profile = () => {
             <div className='go-back-button'>
                 <a href="#" className="btn-go-back"><FaHome /></a>
             </div>
-            <h1>{profileData.name}</h1>
+            <h1>{profileData.displayName}</h1>
 
             {profileData.fotoPerfil && (
                 <img src={profileData.fotoPerfil} alt="Profile" className="profile-picture" />
@@ -91,13 +80,15 @@ const Profile = () => {
             <p>Email: {profileData.email}</p>
             <p>Biography: {profileData.biografia}</p>
             <p>Name: {profileData.name}</p>
+            {/* Campos agregados */}
+            <p>Role: {profileData.role}</p>
 
             {!isOwnProfile && (
-               <div className='actions-profile'>
-               <button className='btn-Add-friend'>Add friend</button>
-               <button className='btn-profile-report'>Report</button>
-               <button className='btn-message-profile'>Message</button>
-               </div>
+                <div className='actions-profile'>
+                    <button className='btn-Add-friend'>Add friend</button>
+                    <button className='btn-profile-report'>Report</button>
+                    <button className='btn-message-profile'>Message</button>
+                </div>
             )}
 
             {isOwnProfile && (
@@ -106,11 +97,12 @@ const Profile = () => {
                 </Link>
             )}
 
-
-            {profileData.privacidad === 'private' && (
-                <h1>Este perfil es privado, para ver mas contenido deberas ser amigo!</h1>
+            {!isOwnProfile && profileData.privacidad === 'private' && (
+                <div className="profile-info-message private">
+                    <FaLock className="lock-icon" /> {/* Icono de candado */}
+                    Este perfil es privado. Para ver más contenido deberás ser amigo.
+                </div>
             )}
-
 
             <div className="notifications-section">
                 <Notifications />

@@ -10,11 +10,7 @@ from rest_framework.permissions import AllowAny
 
 
 class ProfileView(APIView):
-    """
-    Vista para obtener el perfil de usuario desde Firestore.
-    Requiere autenticación con Firebase.
-    """
-    permission_classes = [FirebaseAuthentication]  # Usamos el permiso personalizado
+    permission_classes = [FirebaseAuthentication]
 
     def get(self, request):
         token = request.headers.get('Authorization')
@@ -23,12 +19,10 @@ class ProfileView(APIView):
             return Response({'error': 'Authorization header is missing'}, status=400)
 
         try:
-            # Extraer el token del formato "Bearer <token>"
-            token = token.split(' ')[1]  # Esto es para separar "Bearer" del token real
-            decoded_token = firebase_auth.verify_id_token(token)  # Verificación del token en Firebase
+            token = token.split(' ')[1]
+            decoded_token = firebase_auth.verify_id_token(token)
             uid = decoded_token.get('uid')
 
-            # Obtener la información del usuario desde Firestore
             db = firestore.client()
             user_doc_ref = db.collection('users').document(uid)
             user_doc = user_doc_ref.get()
@@ -38,12 +32,14 @@ class ProfileView(APIView):
 
             user_data = user_doc.to_dict()
 
-            # Verificar si los campos esenciales existen en los datos del usuario
             if 'name' not in user_data or 'email' not in user_data:
                 return Response({'error': 'Required user data is missing'}, status=400)
 
-            # Asegurar que siempre se retorne la foto de perfil (fotoPerfil)
             user_data['fotoPerfil'] = user_data.get('fotoPerfil', None)
+
+            # Agregar role y privacidad en la respuesta
+            user_data['role'] = user_data.get('role', 'user')  # Default to 'user' if missing
+            user_data['privacidad'] = user_data.get('privacidad', 'public')  # Default to 'public' if missing
 
             return Response(user_data, status=200)
 
@@ -57,7 +53,7 @@ class ProfileView(APIView):
             return Response({'error': f'Error fetching user profile: {str(e)}'}, status=400)
 
 class PublicProfileView(APIView):
-    permission_classes = [AllowAny]  # o usa FirebaseAuthentication si quieres protección
+    permission_classes = [AllowAny]
 
     def get(self, request, uid):
         try:
@@ -70,25 +66,22 @@ class PublicProfileView(APIView):
 
             user_data = user_doc.to_dict()
 
-            # Puedes limitar qué información pública devuelves
             public_profile = {
-                'id': uid,  # <- Agrega el UID
+                'id': uid,
                 'name': user_data.get('name'),
                 'email': user_data.get('email'),
                 'biografia': user_data.get('biografia', ''),
                 'fotoPerfil': user_data.get('fotoPerfil', None),
                 'privacidad': user_data.get('privacidad', 'public'),
+                'role': user_data.get('role', 'user'),  # Default to 'user' if missing
+                'displayName': user_data.get('displayName') 
             }
-
-            # Verifica si el perfil en este caso es privado para ver que devuelve
-            #if public_profile['privacidad'] == 'private':
-               # return Response({'error': 'This profile is private'}, status=403)
 
             return Response(public_profile, status=200)
 
         except Exception as e:
             return Response({'error': f'Error fetching public profile: {str(e)}'}, status=400)
-
+        
 
 class AccountManagementView(APIView):
     """

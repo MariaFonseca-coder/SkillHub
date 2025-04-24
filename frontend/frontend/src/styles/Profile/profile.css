@@ -231,7 +231,7 @@
     margin-bottom: 10px;
 }
 
-.actions-profile{    
+.actions-profile {
     margin-top: 30px;
     display: flex;
     flex-direction: row;
@@ -239,53 +239,60 @@
     margin-bottom: 20px;
 }
 
-.btn-Add-friend {
-    background-color: #2980b9; 
-    color: white;
-    padding: 8px 12px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 8px;
-  }
-  
-.btn-profile-report {
-    background-color: #880808; 
-    color: white;
-    padding: 8px 12px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 8px;
-  }
-  
+.btn-Add-friend,
+.btn-profile-report,
 .btn-message-profile {
-    background-color: #27ae60; 
-    color: white;
-    padding: 8px 12px;
+    padding: 10px 16px;
     font-size: 1rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 50px; /* Bordes redondeados para un look más elegante */
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
     margin-top: 8px;
+    font-weight: 600; /* Fuente en negrita */
+    text-transform: uppercase; /* Texto en mayúsculas */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
 
-  }
+/* Botón "Add friend" elegante con un azul oscuro */
+.btn-Add-friend {
+    background-color: #1e3a8a; /* Azul oscuro elegante */
+    color: white;
+}
 
-  .btn-Add-friend:hover {
-    background-color: #3498db;
+.btn-Add-friend:hover {
+    background-color: #334f8d; /* Azul más suave al pasar el mouse */
+    transform: translateY(-2px); /* Efecto sutil */
+}
+
+/* Botón "Report" elegante con un color gris oscuro */
+.btn-profile-report {
+    background-color: #4b5563; /* Gris oscuro sofisticado */
+    color: white;
 }
 
 .btn-profile-report:hover {
-    background-color: #a93226;
+    background-color: #6b7280; /* Gris más suave */
+    transform: translateY(-2px);
+}
+
+/* Botón "Message" elegante con un tono dorado suave */
+.btn-message-profile {
+    background-color: #d4af37; /* Dorado suave */
+    color: white;
 }
 
 .btn-message-profile:hover {
-    background-color: #2ecc71;
+    background-color: #f2c94c; /* Dorado más brillante */
+    transform: translateY(-2px);
+}
+
+/* Efecto de clic */
+.btn-Add-friend:active,
+.btn-profile-report:active,
+.btn-message-profile:active {
+    transform: translateY(1px); /* Efecto al presionar */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Sombra más suave */
 }
 
 .go-back-button {
@@ -315,4 +322,58 @@
     color: white;
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(44, 62, 80, 0.2);
+}
+
+.profile-info-message {
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 15px;
+    padding: 12px 20px;
+    border-radius: 25px;
+    background-color: rgba(0, 0, 0, 0.05); /* Fondo suave gris claro */
+    color: #34495e; /* Texto gris oscuro para mayor contraste */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Borde suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Sombra suave */
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards; /* Animación de aparición */
+}
+
+/* Estilo para perfil privado */
+.profile-info-message.private {
+    background-color: rgba(41, 128, 185, 0.1); /* Fondo suave azul claro */
+    color: #2980b9; /* Texto azul elegante */
+    border-color: rgba(41, 128, 185, 0.3); /* Borde azul claro */
+}
+
+/* Estilo para perfil ajeno */
+.profile-info-message.ajeno {
+    background-color: rgba(130, 140, 255, 0.1); /* Fondo suave azul pastel */
+    color: #5e6f94; /* Texto azul oscuro */
+    border-color: rgba(130, 140, 255, 0.3); /* Borde azul pastel */
+}
+
+/* Icono de candado */
+.profile-info-message .lock-icon {
+    font-size: 1.5rem;
+    color: inherit;
+    opacity: 0.8; /* Ícono más visible pero sutil */
+    transition: opacity 0.3s ease;
+}
+
+/* Sombra suave al pasar el ratón sobre el mensaje */
+.profile-info-message:hover {
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Sombra más prominente */
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
