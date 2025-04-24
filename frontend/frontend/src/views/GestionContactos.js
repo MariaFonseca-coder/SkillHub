@@ -115,105 +115,112 @@ const GestionContactos = () => {
   };
 
   return (
-    <div className="main-container">
-      <h2>Contacts management</h2>
+    
+    <div className="layout-wrapper">
+  <div className="side-band lleft-band"></div>
 
-      <div className="toggle-container">
-        <button
-          className={viewMode === "friends" ? "active-toggle" : ""}
-          onClick={() => setViewMode("friends")}
-        >
-          Friends
-        </button>
-        <button
-          className={viewMode === "followers" ? "active-toggle" : ""}
-          onClick={() => setViewMode("followers")}
-        >
-          Followers
-        </button>
-      </div>
+  <div className="main-container">
+    <h2>Contacts management</h2>
 
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-bar"
-        />
-      </div>
+    <div className="toggle-container">
+      <button
+        className={viewMode === "friends" ? "active-toggle" : ""}
+        onClick={() => setViewMode("friends")}
+      >
+        Friends
+      </button>
+      <button
+        className={viewMode === "followers" ? "active-toggle" : ""}
+        onClick={() => setViewMode("followers")}
+      >
+        Followers
+      </button>
+    </div>
 
-      <div className="friends-list">
-        {viewMode === "friends" ? (
-          filteredFriends.length > 0 ? (
-            filteredFriends.map((friend) => (
-              <div key={friend.id} className="friend-card">
-                <img
-                  src={friend.fotoPerfil || "https://via.placeholder.com/96"}
-                  alt={`Foto de ${friend.name}`}
-                  className="friend-photo"
-                />
-                <span className="friend-name">{friend.name}</span>
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDeleteFriend(friend.id)}
-                >
-                  Delete
-                </button>
-                <button
-                  className="message-btn"
-                  onClick={() => navigate(`/chat/${friend.id}`)}
-                >
-                  Send message
-                </button>
-              </div>
-            ))
-          ) : (
-            <p>No friends found</p>
-          )
-        ) : (
-          filteredFollowers.length > 0 ? (
-            filteredFollowers.map((follower) => (
-              <div key={follower.id} className="friend-card">
-                <img
-                  src={follower.fotoPerfil || "https://via.placeholder.com/96"}
-                  alt={`Foto de ${follower.name}`}
-                  className="friend-photo"
-                />
-                <span className="friend-name">{follower.name}</span>
-                <button
-                  className="delete-btn"
-                  onClick={() => handleRemoveFollower(follower.id)}
-                >
-                  Remove follower
-                </button>
-                <button
-                  className="message-btn"
-                  onClick={() => navigate(`/chat/${follower.id}`)}
-                >
-                  Send message
-                </button>
-              </div>
-            ))
-            
-          ) : (
-            <p>No followers found</p>
-          )
-        )}
-      </div>
+    <div className="search-container">
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="search-bar"
+      />
+    </div>
 
-      {showConfirmModal && (
-        <div className="modal-overlay">
-          <div className="modal-window">
-            <h3>Are you sure you want to delete this user from your friends list?</h3>
-            <div className="modal-actions">
-              <button onClick={confirmDelete} className="modal-btn yes">Yes</button>
-              <button onClick={cancelDelete} className="modal-btn no">No</button>
+    <div className="friends-list">
+      {viewMode === "friends" ? (
+        filteredFriends.length > 0 ? (
+          filteredFriends.map((friend) => (
+            <div key={friend.id} className="friend-card">
+              <img
+                src={friend.fotoPerfil || "https://via.placeholder.com/96"}
+                alt={`Foto de ${friend.name}`}
+                className="friend-photo"
+              />
+              <span className="friend-name">{friend.name}</span>
+              <button
+                className="delete-btn"
+                onClick={() => handleDeleteFriend(friend.id)}
+              >
+                Delete
+              </button>
+              <button
+                className="message-btn"
+                onClick={() => navigate(`/chat/${friend.id}`)}
+              >
+                Send message
+              </button>
             </div>
-          </div>
-        </div>
+          ))
+        ) : (
+          <p>No friends found</p>
+        )
+      ) : (
+        filteredFollowers.length > 0 ? (
+          filteredFollowers.map((follower) => (
+            <div key={follower.id} className="friend-card">
+              <img
+                src={follower.fotoPerfil || "https://via.placeholder.com/96"}
+                alt={`Foto de ${follower.name}`}
+                className="friend-photo"
+              />
+              <span className="friend-name">{follower.name}</span>
+              <button
+                className="delete-btn"
+                onClick={() => handleRemoveFollower(follower.id)}
+              >
+                Remove follower
+              </button>
+              <button
+                className="message-btn"
+                onClick={() => navigate(`/chat/${follower.id}`)}
+              >
+                Send message
+              </button>
+            </div>
+          ))
+        ) : (
+          <p>No followers found</p>
+        )
       )}
     </div>
+
+    {showConfirmModal && (
+      <div className="modal-overlay">
+        <div className="modal-window">
+          <h3>Are you sure you want to delete this user from your friends list?</h3>
+          <div className="modal-actions">
+            <button onClick={confirmDelete} className="modal-btn yes">Yes</button>
+            <button onClick={cancelDelete} className="modal-btn no">No</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+
+  <div className="side-band rright-band"></div>
+</div>
+
   );
 };
 

@@ -1,8 +1,4 @@
-.main-container h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
+
 
 .main-container {
   max-width: 800px; /* o el valor que prefieras */
@@ -20,7 +16,7 @@
 .friend-card {
   display: flex;
   align-items: center;
-  background: #f4f4f4;
+  background: white;
   padding: 10px;
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
@@ -36,7 +32,7 @@
   height: 50px;
   border-radius: 50%;
   margin-right: 15px;
-  border: 2px solid #ccc;
+  border: 2px solid white;
 }
 
 .friend-name {
@@ -76,7 +72,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro */
+  background-color: rgba(0, 0, 0, 0.5); 
   display: flex;
   justify-content: center;
   align-items: center;
@@ -106,12 +102,12 @@
 }
 
 .modal-btn.yes {
-  background-color: #0047AB; /* Verde */
+  background-color: #0047AB; 
   color: white;
 }
 
 .modal-btn.no {
-  background-color: #b92b3f; /* Rojo */
+  background-color: #b92b3f;
   color: white;
 }
 
@@ -125,7 +121,7 @@
   max-width: 400px;
   margin-bottom: 20px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid white;
   font-size: 16px;
 }
 
@@ -139,7 +135,7 @@
   margin: 0 0.5rem;
   padding: 0.5rem 1rem;
   border: none;
-  background-color: #ddd;
+  background-color: white;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
@@ -153,4 +149,31 @@
 .search-container {
   display: flex;
   justify-content: center;
+}
+
+
+.layout-wrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: white; /* fondo general */
+}
+
+.side-band {
+  width: 16%;
+  background-color: #0047AB; /* azul */
+}
+
+.lleft-band {
+    border-right: 2px solid #0047AB;
+
+}
+
+.rright-band {
+}
+
+.main-container {
+  width: 80%;
+  padding: 20px;
+  background-color: white;
 }
