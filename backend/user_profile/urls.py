@@ -10,5 +10,5 @@ urlpatterns = [
     path('add-follower/<str:followed_id>/', AddFollowerView.as_view(), name='add-follower'),
     path('report-user/', ReportUserView.as_view(), name='report-user'),
     path('<str:uid>/', PublicProfileView.as_view(), name='public-profile'),  # Ruta pública del perfil
-    path('<str:uid>/posts/', PublicUserPostsView.as_view(), name='user-posts')
+    path('<str:uid>/posts/', PublicUserPostsView.as_view(), name='public-user-posts') 
 ]

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-
+import UserPosts from './components/UserPosts';
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView';
 import { FaHome, FaLock } from "react-icons/fa";
@@ -139,7 +139,7 @@ const Profile = () => {
     return (
         <div className="profile-container">
             <div className='go-back-button'>
-                <a href="#" className="btn-go-back"><FaHome /></a>
+                <a href="/feed" className="btn-go-back"><FaHome /></a>
             </div>
             <h1>{profileData.displayName}</h1>
 
@@ -184,7 +184,33 @@ const Profile = () => {
             <div className="notifications-section">
                 <Notifications />
             </div>
+
+            {showReportModal && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            <h2>Reportar Usuario</h2>
+                            <textarea
+                                className="report-textarea"
+                                value={reportDescription}
+                                onChange={(e) => setReportDescription(e.target.value)}
+                                placeholder="Describe el motivo del reporte"
+                            />
+                            <button className="modal-button" onClick={handleSubmitReport}>
+                                Enviar Reporte
+                            </button>
+                            <button className="cancel-button" onClick={() => setShowReportModal(false)}>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                     
+                {(isOwnProfile ? currentUserId !== null : paramUserId) && (
+                    <UserPosts isOwnProfile={isOwnProfile} userId={paramUserId} token={token} />
+                )}
         </div>
+        
     );
 };
 

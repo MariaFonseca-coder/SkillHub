@@ -143,10 +143,7 @@ class AccountManagementView(APIView):
 
 
 class UserPostsView(APIView):
-    """
-    Vista para obtener las publicaciones del usuario desde Firestore.
-    """
-    permission_classes = [FirebaseAuthentication]  # Usamos el permiso personalizado
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         token = request.headers.get('Authorization')
@@ -155,15 +152,27 @@ class UserPostsView(APIView):
             return Response({'error': 'Authorization header is missing'}, status=400)
 
         try:
-            # Extraer el token del formato "Bearer <token>"
-            token = token.split(' ')[1]  # Esto es para separar "Bearer" del token real
+            # Asegúrate de que el token esté correctamente formateado: "Bearer <token>"
+            token = token.split(' ')[1]  # Extrae el token de "Bearer <token>"
             decoded_token = firebase_auth.verify_id_token(token)
             uid = decoded_token.get('uid')
 
-            # Obtener las publicaciones del usuario desde Firestore
+            # Asegurarse de que el uid se obtuvo correctamente
+            if not uid:
+                return Response({'error': 'Token does not contain valid UID'}, status=400)
+
+            # Consulta en Firestore
             db = firestore.client()
-            posts_ref = db.collection('posts').where('user_uid', '==', uid)
+            posts_ref = (
+                db.collection('posts')
+                .where('authorId', '==', uid)
+                .where('status', '==', 'enabled')  # Solo posts habilitados
+                .order_by('createdAt', direction=firestore.Query.DESCENDING)
+            )
+
             posts = [doc.to_dict() for doc in posts_ref.stream()]
+            if not posts:
+                return Response({'error': 'No posts found for this user'}, status=404)
 
             return Response(posts, status=200)
 
@@ -175,8 +184,6 @@ class UserPostsView(APIView):
             return Response({'error': 'Invalid token'}, status=401)
         except Exception as e:
             return Response({'error': f'Error fetching user posts: {str(e)}'}, status=400)
-        
-
 
 class AddFriendView(APIView):
     """
@@ -354,7 +361,6 @@ class ReportUserView(APIView):
         
 
 
-
 class PublicUserPostsView(APIView):
     permission_classes = [AllowAny]
 
@@ -362,7 +368,7 @@ class PublicUserPostsView(APIView):
         try:
             db = firestore.client()
 
-            # Traemos el usuario para revisar si tiene perfil privado
+            # Obtener los datos del usuario
             user_doc_ref = db.collection('users').document(uid)
             user_doc = user_doc_ref.get()
 
@@ -370,19 +376,23 @@ class PublicUserPostsView(APIView):
                 return Response({'error': 'User not found'}, status=404)
 
             user_data = user_doc.to_dict()
-            privacidad = user_data.get('privacidad', 'public')  # Si no tiene 'privacidad', consideramos que es 'public'
+            privacidad = user_data.get('privacidad', 'public')
 
-            # Verificamos si el perfil es privado
             if privacidad == 'private':
                 return Response({'error': 'This user\'s profile is private'}, status=403)
 
-            # Buscar los posts del usuario
-            posts_ref = db.collection('posts').where('userId', '==', uid).where('isPrivated', '==', False).order_by('createdAt', direction=firestore.Query.DESCENDING)
-            posts = [doc.to_dict() for doc in posts_ref.stream()]
+            # Consultar los posts públicos
+            posts_ref = (
+                db.collection('posts')
+                .where('authorId', '==', uid)
+                .where('privacy', '==', 'public')
+                .where('status', '==', 'enabled')  # Solo posts habilitados
+                .order_by('createdAt', direction=firestore.Query.DESCENDING)
+            )
 
-            # Verificar si hay posts
+            posts = [doc.to_dict() for doc in posts_ref.stream()]
             if not posts:
-                return Response({'message': 'No posts found for this user'}, status=200)
+                return Response({'error': 'No posts found for this user'}, status=404)
 
             return Response(posts, status=200)
 
