@@ -1,11 +1,10 @@
-// src/views/Politicas.js
 import React from 'react';
 import '../styles/politicas.css';
 
 const Politicas = () => {
   return (
-    <div className="politica__container">
-      <div className="politica__box">
+    <div className="politica-container">
+      <div className="politica-box">
         <h2>Privacy Policy</h2>
         <p>
           At our platform, we value your privacy. The information we collect is used solely to provide you with a better user experience.

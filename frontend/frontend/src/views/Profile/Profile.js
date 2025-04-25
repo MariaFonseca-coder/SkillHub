@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link, useParams } from 'react-router-dom';
-import { useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import '../../styles/Profile/profile.css';
-import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
+import Notifications from '../Notification/NotificationsView';
 import { FaHome, FaLock } from "react-icons/fa";
 
 const Profile = () => {
     const { userId: paramUserId } = useParams(); // <-- id de la URL
+
     const [profileData, setProfileData] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const token = localStorage.getItem('firebaseToken');
+
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportDescription, setReportDescription] = useState('');
 
     useEffect(() => {
         if (!token) {
@@ -34,7 +37,6 @@ const Profile = () => {
             setError('Error getting current user');
             setLoading(false);
         });
-
     }, [token]);
 
     useEffect(() => {
@@ -52,7 +54,7 @@ const Profile = () => {
             const isOwn = !paramUserId || profile.id === currentUserId;
 
             console.log(profile);
-            setProfileData(profile);
+            setProfileData(response.data);
             setLoading(false);
         })
         .catch(() => {
@@ -64,7 +66,7 @@ const Profile = () => {
 
     const handleAddFriend = () => {
         if (!token) {
-            alert('You must be logged in to add a friend.');
+            alert('Debes iniciar sesión para agregar amigos.');
             return;
         }
 
@@ -75,14 +77,14 @@ const Profile = () => {
             alert(response.data.message);
         })
         .catch(error => {
-            console.error('Error adding friend:', error);
-            alert(error.response?.data?.error || 'An error occurred while adding the friend.');
+            console.error('Error al agregar amigo:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al agregar al amigo.');
         });
     };
 
     const handleAddFollower = () => {
         if (!token) {
-            alert('You must be logged in to follow someone.');
+            alert('Debes iniciar sesión para seguir a alguien.');
             return;
         }
 
@@ -93,8 +95,8 @@ const Profile = () => {
             alert(response.data.message);
         })
         .catch(error => {
-            console.error('Error adding follower:', error);
-            alert(error.response?.data?.error || 'An error occurred while adding the follower.');
+            console.error('Error al seguir:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al seguir al usuario.');
         });
     };
 
@@ -102,9 +104,36 @@ const Profile = () => {
         navigate(`/chat/${paramUserId}`);
     };
 
+    const handleReport = () => {
+        setShowReportModal(true);
+    };
+
+    const handleSubmitReport = () => {
+        if (!reportDescription.trim()) {
+            alert('Por favor, proporciona una descripción para el reporte.');
+            return;
+        }
+
+        axios.post('http://localhost:8000/api/profile/report-user/', {
+            description: reportDescription,
+            userId: paramUserId
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+            setShowReportModal(false);
+            setReportDescription('');
+        })
+        .catch(error => {
+            console.error('Error al enviar el reporte:', error);
+            alert(error.response?.data?.error || 'Error enviando el reporte.');
+        });
+    };
+
     const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div>Cargando...</div>;
     if (error) return <div>{error}</div>;
 
     return (
@@ -126,16 +155,23 @@ const Profile = () => {
             {!isOwnProfile && (
                 <div className='actions-profile'>
                     <button className='btn-Add-friend' onClick={handleAddFriend}>Add friend</button>
-                    <button className='btn-profile-report'>Report</button>
-                    <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
                     <button className='btn-follow' onClick={handleAddFollower}>Follow</button>
+                    <button className='btn-profile-report' onClick={handleReport}>Report</button>
+                    <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
                 </div>
             )}
 
             {isOwnProfile && (
-                <Link to="/account-management">
-                    <button className="manage-account-button">Account Management</button>
-                </Link>
+                <>
+                    <Link to="/account-management">
+                        <button className="manage-account-button">Account Management</button>
+                    </Link>
+                    <div className="own-profile-actions">
+                        <Link to="/GestionContactos">
+                            <button className="gestion-contactos-button">Gestionar Contactos</button>
+                        </Link>
+                    </div>
+                </>
             )}
 
             {!isOwnProfile && profileData.privacidad === 'private' && (
