@@ -353,14 +353,38 @@ class ReportUserView(APIView):
             return Response({'error': f'Error reporting user: {str(e)}'}, status=400)
         
 
+
+
 class PublicUserPostsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uid):
         try:
             db = firestore.client()
-            posts_ref = db.collection('posts').where('userId', '==', f'/users/{uid}').order_by('createdAt', direction=firestore.Query.DESCENDING)
-            posts = [doc.to_dict() | {'id': doc.id} for doc in posts_ref.stream()]
-            return Response(posts)
+
+            # Traemos el usuario para revisar si tiene perfil privado
+            user_doc_ref = db.collection('users').document(uid)
+            user_doc = user_doc_ref.get()
+
+            if not user_doc.exists:
+                return Response({'error': 'User not found'}, status=404)
+
+            user_data = user_doc.to_dict()
+            privacidad = user_data.get('privacidad', 'public')  # Si no tiene 'privacidad', consideramos que es 'public'
+
+            # Verificamos si el perfil es privado
+            if privacidad == 'private':
+                return Response({'error': 'This user\'s profile is private'}, status=403)
+
+            # Buscar los posts del usuario
+            posts_ref = db.collection('posts').where('userId', '==', uid).where('isPrivated', '==', False).order_by('createdAt', direction=firestore.Query.DESCENDING)
+            posts = [doc.to_dict() for doc in posts_ref.stream()]
+
+            # Verificar si hay posts
+            if not posts:
+                return Response({'message': 'No posts found for this user'}, status=200)
+
+            return Response(posts, status=200)
+
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            return Response({'error': f'Error fetching public user posts: {str(e)}'}, status=400)

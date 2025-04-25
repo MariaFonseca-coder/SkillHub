@@ -1,45 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const UserPosts = ({ uid, token }) => {
+const UserPosts = ({ isOwnProfile, userId, token }) => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPosts = async () => {
-            try {
-                let res;
-                if (token) {
-                    res = await axios.get('http://localhost:8000/api/posts/', {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                } else {
-                    res = await axios.get(`http://localhost:8000/api/posts/public/${uid}/`);
-                }
-                setPosts(res.data);
-            } catch (err) {
-                console.error("Error fetching posts", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (!token) return;
 
-        fetchPosts();
-    }, [uid, token]);
+        const endpoint = isOwnProfile
+            ? 'http://localhost:8000/api/profile/user-posts/'
+            : `http://localhost:8000/api/profile/${userId}/posts/`;
+
+        axios.get(endpoint, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => {
+            setPosts(res.data);
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error('Error al obtener los posts:', err);
+            setLoading(false);
+        });
+
+    }, [userId, isOwnProfile, token]);
 
     if (loading) return <p>Cargando publicaciones...</p>;
-    if (posts.length === 0) return <p>Este usuario no tiene publicaciones.</p>;
 
     return (
-        <div className="mt-6 space-y-4">
-            {posts.map(post => (
-                <div key={post.id} className="p-4 border rounded-xl shadow">
-                    <p>{post.contenido}</p>
-                    <small>{new Date(post.createdAt._seconds * 1000).toLocaleString()}</small>
-                </div>
-            ))}
+        <div className="user-posts-section">
+            <h2>Publicaciones</h2>
+            {posts.length === 0 ? (
+                <p>No hay publicaciones para mostrar.</p>
+            ) : (
+                posts.map((post, idx) => (
+                    <div key={idx} className="post-card">
+                        <p>{post.content}</p>
+                        <small>{new Date(post.createdAt._seconds * 1000).toLocaleString()}</small>
+                    </div>
+                ))
+            )}
         </div>
     );
 };
