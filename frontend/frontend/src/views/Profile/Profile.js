@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link, useParams } from 'react-router-dom';
-import { useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import '../../styles/Profile/profile.css';
-import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
+import Notifications from '../Notification/NotificationsView';
 import { FaHome, FaLock } from "react-icons/fa";
 
 const Profile = () => {
-    const { userId: paramUserId } = useParams(); // Extraer el userId de los parámetros de la URL
+    const { userId: paramUserId } = useParams();
     const [profileData, setProfileData] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -25,7 +24,6 @@ const Profile = () => {
             return;
         }
 
-        // Obtener el ID del usuario logueado
         axios.get('http://localhost:8000/api/profile', {
             headers: { Authorization: `Bearer ${token}` }
         })
@@ -43,18 +41,14 @@ const Profile = () => {
         if (!token || currentUserId === null) return;
 
         const url = paramUserId
-            ? `http://localhost:8000/api/profile/${paramUserId}`  // URL para perfil de usuario específico
-            : 'http://localhost:8000/api/profile'; // Si no se pasa paramUserId, es el perfil del usuario logueado
+            ? `http://localhost:8000/api/profile/${paramUserId}`
+            : 'http://localhost:8000/api/profile';
 
-        // Obtener los datos del perfil
         axios.get(url, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
-            const profile = response.data;
-            const isOwn = !paramUserId || profile.id === currentUserId;
-
-            setProfileData(profile);
+            setProfileData(response.data);
             setLoading(false);
         })
         .catch(() => {
@@ -66,30 +60,44 @@ const Profile = () => {
 
     const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
 
-    const handleReportUser = () => {
+    const handleAddFriend = () => {
         if (!token) {
-            alert('Debes iniciar sesión para reportar.');
+            alert('Debes iniciar sesión para agregar amigos.');
             return;
         }
 
-        if (!paramUserId) {
-            alert('ID de usuario no válido.');
-            return;
-        }
-
-        axios.post('http://localhost:8000/api/profile/report-user/', {
-            description: "Este usuario fue reportado por comportamiento inapropiado.",
-            userId: paramUserId  // ID del usuario reportado
-        },{
+        axios.post(`http://localhost:8000/api/profile/add-friend/${paramUserId}/`, {}, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
             alert(response.data.message);
         })
         .catch(error => {
-            console.error('Error al reportar usuario:', error);
-            alert(error.response?.data?.error || 'Ocurrió un error al reportar.');
+            console.error('Error al agregar amigo:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al agregar al amigo.');
         });
+    };
+
+    const handleAddFollower = () => {
+        if (!token) {
+            alert('Debes iniciar sesión para seguir a alguien.');
+            return;
+        }
+
+        axios.post(`http://localhost:8000/api/profile/add-follower/${paramUserId}/`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+        })
+        .catch(error => {
+            console.error('Error al seguir:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al seguir al usuario.');
+        });
+    };
+
+    const handleSendMessage = () => {
+        navigate(`/chat/${paramUserId}`);
     };
 
     const handleReport = () => {
@@ -102,19 +110,16 @@ const Profile = () => {
             return;
         }
 
-        console.log(paramUserId)
-
-        // Usar el paramUserId para reportar al usuario correcto
         axios.post('http://localhost:8000/api/profile/report-user/', {
-            description: reportDescription,  // Descripción ingresada por el usuario
-            userId: paramUserId  // ID del usuario reportado, obtenido desde los parámetros de la URL
+            description: reportDescription,
+            userId: paramUserId
         }, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
             alert(response.data.message);
-            setShowReportModal(false);  // Cerrar el modal después de enviar el reporte
-            setReportDescription('');  // Limpiar el campo de descripción
+            setShowReportModal(false);
+            setReportDescription('');
         })
         .catch(error => {
             console.error('Error al enviar el reporte:', error);
@@ -142,24 +147,24 @@ const Profile = () => {
 
             {!isOwnProfile && (
                 <div className='actions-profile'>
-                    <button className='btn-Add-friend'>Add friend</button>
+                    <button className='btn-Add-friend' onClick={handleAddFriend}>Add friend</button>
+                    <button className='btn-follow' onClick={handleAddFollower}>Follow</button>
                     <button className='btn-profile-report' onClick={handleReport}>Report</button>
-                    <button className='btn-message-profile'>Message</button>
+                    <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
                 </div>
             )}
 
             {isOwnProfile && (
-                <Link to="/account-management">
-                    <button className="manage-account-button">Account Management</button>
-                </Link>
-            )}
-
-            {isOwnProfile && (
-                <div className="own-profile-actions">
-                    <Link to="/GestionContactos">
-                        <button className="gestion-contactos-button">Gestionar Contactos</button>
+                <>
+                    <Link to="/account-management">
+                        <button className="manage-account-button">Account Management</button>
                     </Link>
-                </div>
+                    <div className="own-profile-actions">
+                        <Link to="/GestionContactos">
+                            <button className="gestion-contactos-button">Gestionar Contactos</button>
+                        </Link>
+                    </div>
+                </>
             )}
 
             {!isOwnProfile && profileData.privacidad === 'private' && (
