@@ -63,7 +63,7 @@ const Login = () => {
           <div className="login__input-group">
             <input
               type="email"
-              placeholder="Username or Email"
+              placeholder="Email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required

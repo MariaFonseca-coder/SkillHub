@@ -86,7 +86,7 @@ const AccountManagement = () => {
         }
 
         // Si todo está bien, hace el PUT
-        axios.put('http://localhost:8000/api/profile/account-managment/', newData, {
+        axios.put('http://localhost:8000/api/profile/account-management/', newData, {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {

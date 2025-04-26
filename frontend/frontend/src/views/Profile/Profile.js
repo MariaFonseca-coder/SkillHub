@@ -1,130 +1,216 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import UserPosts from '../UserPosts';
 import '../../styles/Profile/profile.css';
-import Notifications from '../Notification/NotificationsView'; // Import the Notifications component
+import Notifications from '../Notification/NotificationsView';
+import { FaHome, FaLock } from "react-icons/fa";
 
 const Profile = () => {
+    const { userId: paramUserId } = useParams(); // <-- id de la URL
+
     const [profileData, setProfileData] = useState(null);
-    const [userPosts, setUserPosts] = useState([]); 
-    const [recommendedUsers, setRecommendedUsers] = useState([]); 
+    const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const navigate = useNavigate();
     const token = localStorage.getItem('firebaseToken');
 
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportDescription, setReportDescription] = useState('');
+
     useEffect(() => {
-        if (token) {
-            // Obtener los datos del perfil del usuario
-            axios.get('http://localhost:8000/api/profile', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setProfileData(response.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                setError('Error getting profile');
-                setLoading(false);
-            });
-
-            // Obtener las publicaciones del usuario
-            axios.get('http://localhost:8000/api/profile/user-posts', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setUserPosts(response.data);
-            })
-            .catch(error => {
-                setError('Error getting posts');
-            });
-
-            // Obtener usuarios recomendados
-            axios.get('http://localhost:8000/api/profile/recommended-users', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => {
-                setRecommendedUsers(response.data); 
-            })
-            .catch(error => {
-                console.error('Error getting recommended users', error);
-            });
-        } else {
-            setError('Something went wrong, please login again');
+        if (!token) {
+            setError('Token not found. Please log in.');
             setLoading(false);
+            return;
         }
+
+        // Obtener el perfil del usuario autenticado
+        axios.get('http://localhost:8000/api/profile', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => {
+            setCurrentUserId(res.data.id); // Guardamos el ID actual
+        })
+        .catch(() => {
+            setError('Error getting current user');
+            setLoading(false);
+        });
     }, [token]);
 
-    // Aquí va la logica para manejar el follow
-    const handleFollow = (userId) => {
-        console.log(`Follow user: ${userId}`); 
+    useEffect(() => {
+        if (!token || currentUserId === null) return;
+
+        const url = paramUserId
+            ? `http://localhost:8000/api/profile/${paramUserId}`
+            : 'http://localhost:8000/api/profile';
+
+        axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            const profile = response.data;
+            const isOwn = !paramUserId || profile.id === currentUserId;
+
+            console.log(profile);
+            setProfileData(response.data);
+            setLoading(false);
+        })
+        .catch(() => {
+            setError('Error al obtener los datos del perfil.');
+            setLoading(false);
+        });
+
+    }, [token, paramUserId, currentUserId]);
+
+    const handleAddFriend = () => {
+        if (!token) {
+            alert('Debes iniciar sesión para agregar amigos.');
+            return;
+        }
+
+        axios.post(`http://localhost:8000/api/profile/add-friend/${paramUserId}/`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+        })
+        .catch(error => {
+            console.error('Error al agregar amigo:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al agregar al amigo.');
+        });
     };
 
-    // Aquí va la logica para manejar el reporte
-    const handleReport = (userId) => {
-        console.log(`Report user: ${userId}`); 
+    const handleAddFollower = () => {
+        if (!token) {
+            alert('Debes iniciar sesión para seguir a alguien.');
+            return;
+        }
+
+        axios.post(`http://localhost:8000/api/profile/add-follower/${paramUserId}/`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+        })
+        .catch(error => {
+            console.error('Error al seguir:', error);
+            alert(error.response?.data?.error || 'Ocurrió un error al seguir al usuario.');
+        });
     };
 
-    // Aquí va la logica para manejar el mensaje 
-    const handleSendMessage = (userId) => {
-        console.log(`Send message to user: ${userId}`); 
+    const handleSendMessage = () => {
+        navigate(`/chat/${paramUserId}`);
     };
 
-    // Renderizando el contenido
-    if (loading) return <div className="loading-message">Loading...</div>;
-    if (error) return <div className="error-message">Error loading profile, Please Login again.</div>;
+    const handleReport = () => {
+        setShowReportModal(true);
+    };
+
+    const handleSubmitReport = () => {
+        if (!reportDescription.trim()) {
+            alert('Por favor, proporciona una descripción para el reporte.');
+            return;
+        }
+
+        axios.post('http://localhost:8000/api/profile/report-user/', {
+            description: reportDescription,
+            userId: paramUserId
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(response => {
+            alert(response.data.message);
+            setShowReportModal(false);
+            setReportDescription('');
+        })
+        .catch(error => {
+            console.error('Error al enviar el reporte:', error);
+            alert(error.response?.data?.error || 'Error enviando el reporte.');
+        });
+    };
+
+    const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
+
+    if (loading) return <div>Cargando...</div>;
+    if (error) return <div>{error}</div>;
 
     return (
         <div className="profile-container">
-            <h1>{profileData.name}'s Profile</h1>
+            <div className='go-back-button'>
+                <a href="/feed" className="btn-go-back"><FaHome /></a>
+            </div>
+            <h1>{profileData.displayName}</h1>
 
-            {/* Mostrar foto de perfil si está disponible */}
             {profileData.fotoPerfil && (
-                <img 
-                    src={profileData.fotoPerfil} 
-                    alt="Profile" 
-                    className="profile-picture"
-                />
+                <img src={profileData.fotoPerfil} alt="Profile" className="profile-picture" />
             )}
 
-            {/* Mostrar datos del perfil */}
             <p>Email: {profileData.email}</p>
             <p>Biography: {profileData.biografia}</p>
             <p>Name: {profileData.name}</p>
+            <p>Role: {profileData.role}</p>
 
-            {/* Botón para redirigir a la sección de Account Management */}
-            <Link to="/account-management">
-                <button className="manage-account-button">Account Management</button>
-            </Link>
+            {!isOwnProfile && (
+                <div className='actions-profile'>
+                    <button className='btn-Add-friend' onClick={handleAddFriend}>Add friend</button>
+                    <button className='btn-follow' onClick={handleAddFollower}>Follow</button>
+                    <button className='btn-profile-report' onClick={handleReport}>Report</button>
+                    <button className='btn-message-profile' onClick={handleSendMessage}>Message</button>
+                </div>
+            )}
 
-            {/* Publicaciones del usuario */}
-            <div className="user-posts">
-                <h2>My Posts</h2>
-                {userPosts.length === 0 ? <p>No posts available.</p> : userPosts.map(post => (
-                    <div key={post.id} className="post-item">
-                        <p>{post.content}</p>
+            {isOwnProfile && (
+                <>
+                    <Link to="/account-management">
+                        <button className="manage-account-button">Account Management</button>
+                    </Link>
+                    <div className="own-profile-actions">
+                        <Link to="/GestionContactos">
+                            <button className="gestion-contactos-button">Gestionar Contactos</button>
+                        </Link>
                     </div>
-                ))}
-            </div>
+                </>
+            )}
 
-            {/* Usuarios recomendados */}
-            <div className="recommended-users">
-                <h2>Recommended Users</h2>
-                {recommendedUsers.length === 0 ? <p>No recommended users.</p> : recommendedUsers.map(user => (
-                    <div key={user.uid} className="recommended-user">
-                        <p>{user.name}</p>
-                        <button className="follow-button" onClick={() => handleFollow(user.uid)}>Follow</button>
-                        <button className="report-button" onClick={() => handleReport(user.uid)}>Report</button>
-                        <button className="message-button" onClick={() => handleSendMessage(user.uid)}>Send Message</button>
-                    </div>
-                ))}
-            </div>
+            {!isOwnProfile && profileData.privacidad === 'private' && (
+                <div className="profile-info-message private">
+                    <FaLock className="lock-icon" />
+                    Este perfil es privado. Para ver más contenido deberás ser amigo.
+                </div>
+            )}
 
-            {/* Notifications */}
             <div className="notifications-section">
-                <Notifications /> {}
+                <Notifications />
             </div>
+
+            {showReportModal && (
+                    <div className="modal">
+                        <div className="modal-content">
+                            <h2>Reportar Usuario</h2>
+                            <textarea
+                                className="report-textarea"
+                                value={reportDescription}
+                                onChange={(e) => setReportDescription(e.target.value)}
+                                placeholder="Describe el motivo del reporte"
+                            />
+                            <button className="modal-button" onClick={handleSubmitReport}>
+                                Enviar Reporte
+                            </button>
+                            <button className="cancel-button" onClick={() => setShowReportModal(false)}>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                     
+                {(isOwnProfile ? currentUserId !== null : paramUserId) && (
+                    <UserPosts isOwnProfile={isOwnProfile} userId={paramUserId} token={token} />
+                )}
         </div>
+        
     );
 };
 
