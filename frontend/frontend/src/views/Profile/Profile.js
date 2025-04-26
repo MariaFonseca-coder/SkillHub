@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-
+import UserPosts from './components/UserPosts';
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView';
 import { FaHome, FaLock } from "react-icons/fa";
 
 const Profile = () => {
-    const { userId: paramUserId } = useParams();
+    const { userId: paramUserId } = useParams(); // <-- id de la URL
+
     const [profileData, setProfileData] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const token = localStorage.getItem('firebaseToken');
+
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportDescription, setReportDescription] = useState('');
+    const [isFriend, setIsFriend] = useState(false);
 
     useEffect(() => {
         if (!token) {
@@ -24,17 +27,17 @@ const Profile = () => {
             return;
         }
 
+        // Obtener el perfil del usuario autenticado
         axios.get('http://localhost:8000/api/profile', {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => {
-            setCurrentUserId(res.data.id);
+            setCurrentUserId(res.data.id); // Guardamos el ID actual
         })
         .catch(() => {
             setError('Error getting current user');
             setLoading(false);
         });
-
     }, [token]);
 
     useEffect(() => {
@@ -48,17 +51,30 @@ const Profile = () => {
             headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
-            setProfileData(response.data);
+            const profile = response.data;
+            const isOwn = !paramUserId || profile.id === currentUserId;
+
+            // Verificamos si el perfil es privado y si es amigo
+            if (paramUserId && !isOwn) {
+                axios.get(`http://localhost:8000/api/profile/${paramUserId}/is-friend/${currentUserId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                .then(friendResponse => {
+                    setIsFriend(friendResponse.data.isFriend);
+                })
+                .catch(() => {
+                    setIsFriend(false);
+                });
+            }
+
+            setProfileData(profile);
             setLoading(false);
         })
         .catch(() => {
             setError('Error al obtener los datos del perfil.');
             setLoading(false);
         });
-
     }, [token, paramUserId, currentUserId]);
-
-    const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
 
     const handleAddFriend = () => {
         if (!token) {
@@ -127,7 +143,9 @@ const Profile = () => {
         });
     };
 
-    if (loading) return <div>Cargando...</div>;
+    const isOwnProfile = !paramUserId || (currentUserId && parseInt(paramUserId) === currentUserId);
+
+    if (loading) return <div>Loading...</div>;
     if (error) return <div>{error}</div>;
 
     return (
@@ -135,15 +153,16 @@ const Profile = () => {
             <div className='go-back-button'>
                 <a href="http://localhost:3000/feed" className="btn-go-back"><FaHome /></a>
             </div>
-            <h1>{profileData.name}</h1>
+            <h1>{profileData.displayName}</h1>
 
             {profileData.fotoPerfil && (
                 <img src={profileData.fotoPerfil} alt="Profile" className="profile-picture" />
             )}
 
-            <p className="profile-info">Email: {profileData.email}</p>
-            <p className="profile-info">Biography: {profileData.biografia}</p>
-            <p className="profile-info">Name: {profileData.name}</p>
+            <p>Email: {profileData.email}</p>
+            <p>Biography: {profileData.biografia}</p>
+            <p>Name: {profileData.name}</p>
+            <p>Role: {profileData.role}</p>
 
             {!isOwnProfile && (
                 <div className='actions-profile'>
@@ -161,16 +180,16 @@ const Profile = () => {
                     </Link>
                     <div className="own-profile-actions">
                         <Link to="/GestionContactos">
-                            <button className="gestion-contactos-button">Gestionar Contactos</button>
+                            <button className="gestion-contactos-button">Manage Contacts</button>
                         </Link>
                     </div>
                 </>
             )}
 
-            {!isOwnProfile && profileData.privacidad === 'private' && (
+            {!isOwnProfile && profileData.privacidad === 'private' && !isFriend && (
                 <div className="profile-info-message private">
                     <FaLock className="lock-icon" />
-                    Este perfil es privado. Para ver más contenido deberás ser amigo.
+                    Este perfil es privado. Para ver más contenido, debes ser amigo.
                 </div>
             )}
 
@@ -181,17 +200,26 @@ const Profile = () => {
             {showReportModal && (
                 <div className="modal">
                     <div className="modal-content">
-                        <h2>Reportar Usuario</h2>
+                        <h2>Report User</h2>
                         <textarea
+                            className="report-textarea"
                             value={reportDescription}
                             onChange={(e) => setReportDescription(e.target.value)}
-                            className="report-textarea"
-                            placeholder="Descripción del reporte"
+                            placeholder="Describe el motivo del reporte"
                         />
-                        <button onClick={handleSubmitReport} className="modal-button">Enviar Reporte</button>
-                        <button onClick={() => setShowReportModal(false)} className="cancel-button">Cancelar</button>
+                        <button className="modal-button" onClick={handleSubmitReport}>
+                            Enviar Reporte
+                        </button>
+                        <button className="cancel-button" onClick={() => setShowReportModal(false)}>
+                            Cancelar
+                        </button>
                     </div>
                 </div>
+            )}
+
+            {/* Mostrar los posts solo si el perfil no es privado o si eres amigo */}
+            {((isOwnProfile || (profileData.privacidad !== 'private' || isFriend)) && profileData) && (
+                <UserPosts isOwnProfile={isOwnProfile} userId={paramUserId} token={token} />
             )}
         </div>
     );

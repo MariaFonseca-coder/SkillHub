@@ -485,3 +485,98 @@
 .modal-button:hover {
     opacity: 0.8;
 }
+
+/* Sección de publicaciones */
+.user-posts-section {
+    margin-top: 30px;
+    width: 100%;
+}
+
+.user-posts-section h2 {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.user-posts-section .post-card {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease; /* Para transición suave al pasar el ratón */
+}
+
+.user-posts-section .post-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Efecto de sombra al pasar el ratón */
+}
+
+.user-posts-section .post-card p {
+    font-size: 1rem;
+    color: #7f8c8d; 
+    margin-bottom: 10px;
+}
+
+.user-posts-section .post-card .post-image {
+    width: 100%;
+    max-width: 500px; /* Limita el ancho máximo de la imagen */
+    height: auto; /* Mantiene la relación de aspecto */
+    border-radius: 8px;
+    margin-top: 12px;
+    object-fit: contain; /* Asegura que la imagen se ajuste sin recortarse ni deformarse */
+}
+
+.user-posts-section .post-card small {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    display: block;
+    margin-top: 10px;
+}
+
+/* Estilos de botones dentro del post */
+.user-posts-section .post-card .edit-post-button,
+.user-posts-section .post-card .delete-post-button {
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+/* Botón de editar */
+.user-posts-section .post-card .edit-post-button {
+    background-color: #16a085; 
+    color: white;
+}
+
+.user-posts-section .post-card .edit-post-button:hover {
+    background-color: #1abc9c; 
+}
+
+/* Botón de eliminar */
+.user-posts-section .post-card .delete-post-button {
+    background-color: #e74c3c; 
+    color: white;
+}
+
+.user-posts-section .post-card .delete-post-button:hover {
+    background-color: #c0392b;
+}
+
+/* Estilos de mensaje de error o carga dentro del post */
+.user-posts-section .post-card .loading-message,
+.user-posts-section .post-card .error-message {
+    font-size: 1rem;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.user-posts-section .post-card .loading-message {
+    color: #95a5a6;
+}
+
+.user-posts-section .post-card .error-message {
+    color: #e74c3c;
+}

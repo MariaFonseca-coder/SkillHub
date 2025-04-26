@@ -138,6 +138,7 @@ class FirebaseLoginView(APIView):
 
         except Exception as e:
             print(f"Error al verificar el token: {str(e)}") 
+            print('error', e)
             return Response({
                 'error': 'Token inválido o expirado',
                 'detalle': str(e)
