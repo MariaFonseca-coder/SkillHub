@@ -58,6 +58,7 @@ const Login = () => {
       <div className="login__form-wrapper">
         <h2 className="login__title">Login</h2>
 
+        {/* INPUTS */}
         <form onSubmit={handleLogin} className="login__form">
           <div className="login__input-group">
             <input
