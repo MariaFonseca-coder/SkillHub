@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import UserPosts from './components/UserPosts';
+import UserPosts from './Components/UserPosts';
 import '../../styles/Profile/profile.css';
 import Notifications from '../Notification/NotificationsView';
 import { FaHome, FaLock } from "react-icons/fa";
