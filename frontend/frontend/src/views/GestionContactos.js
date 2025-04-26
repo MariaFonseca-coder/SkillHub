@@ -246,7 +246,7 @@ const handleDenyRequest = async (friendId) => {
                   <span className="friend-name">{friend.name}</span>
                   <div className="friend-card-buttons">
                     <button
-                      className="message-btn"
+                      className="message-btnn"
                       onClick={() => navigate(`/chat/${friend.id}`)}
                     >
                       Send Message
@@ -275,7 +275,7 @@ const handleDenyRequest = async (friendId) => {
                   <span className="friend-name">{follower.name}</span>
                   <div className="friend-card-buttons">
                     <button
-                      className="message-btn"
+                      className="message-btnn"
                       onClick={() => navigate(`/chat/${follower.id}`)}
                     >
                       Send Message
@@ -334,6 +334,8 @@ const handleDenyRequest = async (friendId) => {
           </div>
         )}
       </div>
+
+      <div className="side-band rright-band"></div>
 
     </div>
   );

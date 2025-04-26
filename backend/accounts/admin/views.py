@@ -254,7 +254,54 @@ class GetAllPostsView(APIView):
             posts = posts_ref.stream()
 
             posts_list = []
-            palabras_prohibidas = ["hola", "test", "puta", "idiota","hijueputa", "estupido","imbecil", "tarado", "test","hola", "test","hola", "test","hola", "test","hola", "test","hola", "test"]
+
+            palabras_prohibidas = [
+    "puta", "idiota", "hijueputa", "estupido", "imbecil", "tarado",
+    "Abanto", "Abrazafarolas", "Adufe", "Alcornoque", "Alfeñique", "Andurriasmo", "Arrastracueros",
+    "Artabán", "Atarre", "Baboso", "Barrabás", "Barriobajero", "Bebecharcos", "Bellaco", "Belloto",
+    "Berzotas", "Besugo", "Bobalicón", "Bocabuzón", "Bocachancla", "Bocallanta", "Boquimuelle",
+    "Borrico", "Botarate", "Brasas", "Cabestro", "Cabezaalberca", "Cabezabuque", "Cachibache",
+    "Cafre", "Cagalindes", "Cagarruta", "Calambuco", "Calamidad", "Caldúo", "Calientahielos",
+    "Calzamonas", "Cansalmas", "Cantamañanas", "Capullo", "Caracaballo", "Caracartón", "Caraculo",
+    "Caraflema", "Carajaula", "Carajote", "Carapapa", "Carapijo", "Cazurro", "Cebollino", "Cenizo",
+    "Cenutrio", "Ceporro", "Cernícalo", "Charrán", "Chiquilicuatre", "Chirimbaina", "Chupacables",
+    "Chupasangre", "Chupóptero", "Cierrabares", "Cipote", "Comebolsas", "Comechapas", "Comeflores",
+    "Comestacas", "Cretino", "Cuerpoescombro", "Culopollo", "Descerebrado", "Desgarracalzas",
+    "Dondiego", "Donnadie", "Echacantos", "Ejarramantas", "Energúmeno", "Esbaratabailes", "Escolimoso",
+    "Escornacabras", "Estulto", "Fanfosquero", "Fantoche", "Fariseo", "Filimincias", "Foligoso",
+    "Fulastre", "Ganapán", "Ganapio", "Gandúl", "Gañán", "Gaznápiro", "Gilipuertas", "Giraesquinas",
+    "Gorrino", "Gorrumino", "Guitarro", "Gurriato", "Habahelá", "Huelegateras", "Huevón",
+    "Lamecharcos", "Lameculos", "Lameplatos", "Lechuguino", "Lerdo", "Letrín", "Lloramigas",
+    "Longanizas", "Lumbreras", "Maganto", "Majadero", "Malasangre", "Malasombra", "Malparido",
+    "Mameluco", "Mamporrero", "Manegueta", "Mangarrán", "Mangurrián", "Mastuerzo", "Matacandiles",
+    "Meapilas", "Melón", "Mendrugo", "Mentecato", "Mequetrefe", "Merluzo", "Metemuertos",
+    "Metijaco", "Mindundi", "Morlaco", "Morroestufa", "Muerdesartenes", "Orate", "Ovejo",
+    "Pagafantas", "Palurdo", "Pamplinas", "Panarra", "Panoli", "Papafrita", "Papanatas", "Papirote",
+    "Paquete", "Pardillo", "Parguela", "Pasmarote", "Pasmasuegras", "Pataliebre", "Patán",
+    "Pavitonto", "Pazguato", "Pecholata", "Pedorro", "Peinabombillas", "Peinaovejas", "Pelagallos",
+    "Pelagambas", "Pelagatos", "Pelatigres", "Pelazarzas", "Pelele", "Pelma", "Percebe",
+    "Perrocostra", "Perroflauta", "Peterete", "Petimetre", "Picapleitos", "Pichabrava", "Pillavispas",
+    "Piltrafa", "Pinchauvas", "Pintamonas", "Piojoso", "Pitañoso", "Pitofloro", "Plomo",
+    "Pocasluces", "Pollopera", "Quitahipos", "Rastrapajo", "Rebañasandías", "Revientabaules",
+    "Ríeleches", "Robaperas", "Sabandija", "Sacamuelas", "Sanguijuela", "Sinentraero",
+    "Sinsustancia", "Sonajas", "Sonso", "Soplagaitas", "Soplaguindas", "Sosco", "Tagarote",
+    "Tarugo", "Tiralevitas", "Tocapelotas", "Tocho", "Tolai", "Tontaco", "Tontucio",
+    "Tordo", "Tragaldabas", "Tuercebotas", "Tunante", "Zamacuco", "Zambombo", "Zampabollos",
+    "Zamugo", "Zángano", "Zarrapastroso", "Zascandil", "Zopenco", "Zoquete", "Zote", "Zullenco",
+    "Zurcefrenillos",
+    "arse", "arsehead", "arsehole", "ass", "ass hole", "asshole", "bastard", "bitch", "bloody",
+    "bollocks", "brotherfucker", "bugger", "bullshit", "child-fucker", "Christ on a bike",
+    "Christ on a cracker", "cock", "cocksucker", "crap", "cunt", "dammit", "damn", "damned",
+    "damn it", "dick", "dick-head", "dickhead", "dumb ass", "dumb-ass", "dumbass", "dyke",
+    "faggot", "father-fucker", "fatherfucker", "fuck", "fucked", "fucker", "fucking", "god dammit",
+    "goddammit", "God damn", "god damn", "goddamn", "Goddamn", "goddamned", "goddamnit", "godsdamn",
+    "hell", "holy shit", "horseshit", "in shit", "jackarse", "jack-ass", "jackass", "Jesus Christ",
+    "Jesus fuck", "Jesus Harold Christ", "Jesus H. Christ", "Jesus, Mary and Joseph", "Jesus wept",
+    "kike", "mother fucker", "mother-fucker", "motherfucker", "nigga", "nigra", "pigfucker",
+    "piss", "prick", "pussy", "shit", "shit ass", "shite", "sibling fucker", "sisterfuck",
+    "sisterfucker", "slut", "son of a bitch", "son of a whore", "spastic", "sweet Jesus",
+    "twat", "wanker"
+]
             palabra_detectada = False
 
             for post in posts:
@@ -319,4 +366,4 @@ def check_posts_periodically():
         except Exception as e:
             print(f"🔥 Error consultando el endpoint: {e}")
 
-        time.sleep(10000)  # se ajusta tiempo aqui
+        time.sleep(30)  # se ajusta tiempo aqui

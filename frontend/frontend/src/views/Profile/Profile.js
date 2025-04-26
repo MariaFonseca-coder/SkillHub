@@ -133,7 +133,7 @@ const Profile = () => {
     return (
         <div className="profile-container">
             <div className='go-back-button'>
-                <a href="#" className="btn-go-back"><FaHome /></a>
+                <a href="http://localhost:3000/feed" className="btn-go-back"><FaHome /></a>
             </div>
             <h1>{profileData.name}</h1>
 
