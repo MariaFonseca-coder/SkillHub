@@ -143,7 +143,7 @@ class AccountManagementView(APIView):
 
 
 class UserPostsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [FirebaseAuthentication]
 
     def get(self, request):
         token = request.headers.get('Authorization')
@@ -166,13 +166,16 @@ class UserPostsView(APIView):
             posts_ref = (
                 db.collection('posts')
                 .where('authorId', '==', uid)
-                .where('status', '==', 'enabled')  # Solo posts habilitados
-                .order_by('createdAt', direction=firestore.Query.DESCENDING)
+                .where('status', '==', 'enabled')
             )
 
             posts = [doc.to_dict() for doc in posts_ref.stream()]
             if not posts:
                 return Response({'error': 'No posts found for this user'}, status=404)
+
+            # Incluir las URLs de los medios si están disponibles
+            for post in posts:
+                post['mediaUrl'] = post.get('mediaUrl', None)  # Incluyendo la URL del video o imagen si existe
 
             return Response(posts, status=200)
 
@@ -387,7 +390,7 @@ class PublicUserPostsView(APIView):
                 .where('authorId', '==', uid)
                 .where('privacy', '==', 'public')
                 .where('status', '==', 'enabled')  # Solo posts habilitados
-                .order_by('createdAt', direction=firestore.Query.DESCENDING)
+                #.order_by('createdAt', direction=firestore.Query.DESCENDING)
             )
 
             posts = [doc.to_dict() for doc in posts_ref.stream()]
@@ -398,3 +401,43 @@ class PublicUserPostsView(APIView):
 
         except Exception as e:
             return Response({'error': f'Error fetching public user posts: {str(e)}'}, status=400)
+        
+
+class AreFriendsView(APIView):
+    permission_classes = [FirebaseAuthentication]  # Autenticación personalizada
+
+    def get(self, request, uid):
+        token = request.headers.get('Authorization')
+        if not token:
+            return Response({'error': 'Authorization header is missing'}, status=400)
+        
+        try:
+            # Verificar y decodificar el token
+            token = token.split(' ')[1]  # Si el token está en formato "Bearer <token>"
+            decoded_token = firebase_auth.verify_id_token(token)
+            current_uid = decoded_token.get('uid')
+
+            # Conexión a Firestore
+            db = firestore.client()
+            friendships_ref = db.collection('friendships')
+
+            # Verificar amistad en ambas direcciones
+            friendship = friendships_ref.where('userId1', '==', db.document(f'users/{current_uid}')) \
+                                        .where('userId2', '==', db.document(f'users/{uid}')) \
+                                        .where('state', '==', 'accepted') \
+                                        .stream()
+
+            friendship_reverse = friendships_ref.where('userId1', '==', db.document(f'users/{uid}')) \
+                                                .where('userId2', '==', db.document(f'users/{current_uid}')) \
+                                                .where('state', '==', 'accepted') \
+                                                .stream()
+
+            # Si existe alguna amistad, devolver True
+            if any(friendship) or any(friendship_reverse):
+                return Response({'areFriends': True}, status=200)
+
+            # Si no existe, devolver False
+            return Response({'areFriends': False}, status=200)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)

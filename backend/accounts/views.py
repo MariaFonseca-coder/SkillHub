@@ -124,6 +124,7 @@ class FirebaseLoginView(APIView):
                 'role': role
             }, status=status.HTTP_200_OK)
         except Exception as e:  
+            print('error', e)
             return Response({
                 'error': 'Token inválido o expirado',
                 'detalle': str(e)
