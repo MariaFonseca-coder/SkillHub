@@ -99,23 +99,35 @@ class FirebaseLoginView(APIView):
         if not token:
             return Response({'error': 'No se proporcionó token'}, status=status.HTTP_400_BAD_REQUEST)
         try:
+            # Verificar el token de Firebase
             decoded_token = firebase_auth.verify_id_token(token)
             uid = decoded_token.get('uid')
             email = decoded_token.get('email')
+
+            # Crear o asociar el usuario en Django
             user, created = User.objects.get_or_create(
                 email=email, 
                 defaults={'username': email.split('@')[0]}
             )
+
             # Valor por defecto: si el usuario tiene permisos administrativos
             role = 'admin' if user.is_staff else 'user'
-            
-            # Consultar en Firestore para obtener el rol guardado (por ejemplo, "teacher" o "student")
+
+            # Consultar en Firestore para obtener el rol y el estado del usuario
             db = firestore.client()
             user_doc_ref = db.collection('users').document(uid)
             user_doc = user_doc_ref.get()
-            if user_doc.exists:
-                data = user_doc.to_dict()
-                role = data.get('role', role)
+
+            if not user_doc.exists:
+                return Response({'error': 'Usuario no encontrado en Firestore'}, status=status.HTTP_404_NOT_FOUND)
+
+            user_data = user_doc.to_dict()
+            role = user_data.get('role', role)
+            status_attr = user_data.get('status', 'enabled')  # Por defecto, "enabled"
+
+            # Verificar si el usuario está deshabilitado
+            if status_attr == 'disabled':
+                return Response({'error': 'El usuario está deshabilitado. Contacte al administrador.'}, status=status.HTTP_403_FORBIDDEN)
 
             return Response({
                 'mensaje': 'Autenticación exitosa',
@@ -123,11 +135,14 @@ class FirebaseLoginView(APIView):
                 'user_id': user.id,
                 'role': role
             }, status=status.HTTP_200_OK)
-        except Exception as e:  
+
+        except Exception as e:
+            print(f"Error al verificar el token: {str(e)}") 
             return Response({
                 'error': 'Token inválido o expirado',
                 'detalle': str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+        
 
 @api_view(['POST'])
 def password_reset_request(request):
