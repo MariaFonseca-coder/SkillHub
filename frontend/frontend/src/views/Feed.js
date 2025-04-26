@@ -25,7 +25,9 @@ import {
   orderBy,
   onSnapshot,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  startAt,
+  endAt
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -39,8 +41,10 @@ const Header = ({ currentUser, searchTerm, setSearchTerm }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [foundPosts, setFoundPosts] = useState([]);
+  const [foundUsers, setFoundUsers] = useState([]);
 
-
+  
   useEffect(() => {
     if (!currentUser) return;
   
@@ -60,10 +64,53 @@ const Header = ({ currentUser, searchTerm, setSearchTerm }) => {
     
       setNotifications(fetched);
     });
-       
     
     return unsubscribe;
   }, [currentUser]);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (searchTerm.trim() === "") {
+        setFoundUsers([]);
+        setFoundPosts([]);
+        return;
+      }
+  
+      try {
+        const userSnapshot = await getDocs(collection(db, "users"));
+        const users = userSnapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter((user) => {
+            const name = (user.displayName || "").toLowerCase();
+            const email = (user.email || "").toLowerCase();
+            return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+          });
+  
+        setFoundUsers(users);
+  
+        const postSnapshot = await getDocs(collection(db, "posts"));
+        const posts = postSnapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter((post) => {
+            const content = (post.content || "").toLowerCase();
+            return content.includes(searchTerm.toLowerCase());
+          });
+  
+        setFoundPosts(posts);
+  
+      } catch (error) {
+        console.error("Error buscando:", error);
+      }
+    };
+  
+    fetchResults();
+  }, [searchTerm]);  
   
   const navigate = useNavigate();
 
@@ -100,6 +147,65 @@ const Header = ({ currentUser, searchTerm, setSearchTerm }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {(foundUsers.length > 0 || foundPosts.length > 0) && (
+            <div
+              className="position-absolute bg-white shadow rounded mt-3 p-3"
+              style={{
+                width: "300px",
+                maxHeight: "400px",
+                overflowY: "auto",
+                top: "60px",
+                left: "10px",
+                zIndex: 1500,
+              }}
+            >
+              {foundUsers.length > 0 && (
+                <>
+                  <h6 className="text-muted">Usuarios</h6>
+                  {foundUsers.map((user) => (
+                    <Link
+                      key={user.id}
+                      to={`/profile/${user.id}`}
+                      className="d-flex align-items-center p-2 rounded hover-shadow text-decoration-none text-dark"
+                      style={{ cursor: "pointer" }}
+                    >
+                      <img
+                        src={user.photoURL || "https://via.placeholder.com/40"}
+                        alt="Profile"
+                        className="rounded-circle me-2"
+                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                      />
+                      <div>
+                        <div className="fw-bold">{user.displayName || "Sin nombre"}</div>
+                        <div className="text-muted small">{user.email}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </>
+              )}
+              {foundPosts.length > 0 && (
+                <>
+                  <h6 className="text-muted mt-3">Publicaciones</h6>
+                  {foundPosts.map((post) => (
+                    <Link
+                      key={post.id}
+                      to={`/feed?post=${post.id}`}
+                      className="d-flex align-items-start p-2 rounded hover-shadow text-decoration-none text-dark"
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="me-2">
+                        📄
+                      </div>
+                      <div>
+                        <div className="fw-bold">{post.content.length > 50 ? post.content.slice(0, 50) + "..." : post.content}</div>
+                        <div className="text-muted small">Autor: {post.author || "Desconocido"}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <div className="d-flex align-items-center gap-3 position-relative">
@@ -203,6 +309,22 @@ const Posts = ({ currentUser, searchTerm }) => {
   const [editingPostId, setEditingPostId] = useState(null);
   const [postComments, setPostComments] = useState([]);
   const [mediaValid, setMediaValid] = useState(true);
+  const [userRole, setUserRole] = useState("");
+  
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (currentUser?.uid) {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setUserRole(userData.role || "Usuario");
+        }
+      }
+    };
+  
+    fetchUserRole();
+  }, [currentUser]);
   
 
   useEffect(() => {
@@ -212,7 +334,7 @@ const Posts = ({ currentUser, searchTerm }) => {
       img.onerror = () => setMediaValid(false);
       img.src = newPost.mediaUrl;
     } else {
-      setMediaValid(true); // en caso de que no sea imagen
+      setMediaValid(true);
     }
   }, [newPost.mediaUrl]);
   
@@ -249,19 +371,44 @@ const Posts = ({ currentUser, searchTerm }) => {
   });
 
   useEffect(() => {
-    const q = query(
-      collection(db, "posts"),
-      where("status", "==", "enabled"),
-      orderBy("createdAt", "desc")
-    );
+    if (!currentUser) return;
   
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setPosts(fetchedPosts);
-    });
+    let unsubscribe = null;
   
-    return unsubscribe;
-  }, []);  
+    const fetchAndListen = async () => {
+      try {
+        const friendIds = await getAcceptedFriendIds(currentUser.uid);
+  
+        const q = query(
+          collection(db, "posts"),
+          where("status", "==", "enabled"),
+          orderBy("createdAt", "desc")
+        );
+  
+        unsubscribe = onSnapshot(q, (snapshot) => {
+          const allPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  
+          const visiblePosts = allPosts.filter((post) => {
+            const isAuthor = post.authorId === currentUser.uid;
+            const isPublic = post.privacy === "public";
+            const isPrivateAndFriend = post.privacy === "private" && friendIds.includes(post.authorId);
+
+            return isPublic || isAuthor || isPrivateAndFriend;
+          });
+  
+          setPosts(visiblePosts);
+        });
+      } catch (error) {
+        console.error("Error en listener de posts:", error);
+      }
+    };
+  
+    fetchAndListen();
+  
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [currentUser]);  
 
   const location = useLocation();
     useEffect(() => {
@@ -289,6 +436,35 @@ const Posts = ({ currentUser, searchTerm }) => {
       const match = url.match(regExp);
       return match ? match[1] : null;
     };
+
+    const getAcceptedFriendIds = async (userId) => {
+      const q1 = query(
+        collection(db, "friendships"),
+        where("state", "==", "accepted"),
+        where("userId1", "==", doc(db, "users", userId))
+      );
+    
+      const q2 = query(
+        collection(db, "friendships"),
+        where("state", "==", "accepted"),
+        where("userId2", "==", doc(db, "users", userId))
+      );
+    
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+      const friendIds = [];
+    
+      snap1.forEach((doc) => {
+        const ref = doc.data().userId2;
+        if (ref && ref.id) friendIds.push(ref.id);
+      });
+    
+      snap2.forEach((doc) => {
+        const ref = doc.data().userId1;
+        if (ref && ref.id) friendIds.push(ref.id);
+      });
+    
+      return friendIds;
+    };        
     
     const handleAddPost = async () => {
       if (!newPost.content.trim() || !currentUser) {
@@ -508,9 +684,9 @@ const Posts = ({ currentUser, searchTerm }) => {
 
   const handleShare = (postId) => {
     console.log("Post a compartir:", postId);
-    setPostIdToShare(postId); // Establecer el postId del post que se va a compartir
-    setShareModal(true); // Mostrar el modal de compartir
-    setShareText(""); // Limpiar el texto adicional
+    setPostIdToShare(postId);
+    setShareModal(true);
+    setShareText("");
   };
 
   const handleConfirmShare = async () => {
@@ -580,7 +756,7 @@ const Posts = ({ currentUser, searchTerm }) => {
         }
       }
   
-      alert("¡Has compartido esta publicación dentro de SkillHub!");
+      alert("¡Has compartido esta publicación!");
       setShareModal(false);
     } catch (error) {
       console.error("Error al compartir dentro de la app:", error);
@@ -673,11 +849,16 @@ const Posts = ({ currentUser, searchTerm }) => {
     setReportCommentDescription("");
     setReportCommentError("");
   };
+
+  
   
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center">
-        <h2>¡Bienvenid@, {currentUser?.displayName || currentUser?.email || "usuario"}!</h2>
+      <h2>
+        ¡Bienvenid@ {userRole ? `${userRole} ` : ""}{currentUser?.displayName || currentUser?.email || "usuario"}!
+      </h2>
+
         <div className="d-flex flex-wrap gap-2 mt-3 mt-md-0 justify-content-end">
           <button className="btn btn-light" onClick={() => setViewMode("list")}><FaList /></button>
           <button className="btn btn-light" onClick={() => setViewMode("grid")}><FaTh /></button>
@@ -852,7 +1033,7 @@ const Posts = ({ currentUser, searchTerm }) => {
                   onChange={(e) => setNewPost({ ...newPost, privacy: e.target.value })}
                 >
                   <option value="public">Público</option>
-                  <option value="private">Privado</option>
+                  <option value="privado">Privado</option>
                 </select>
               </div>
 
